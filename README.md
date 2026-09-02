@@ -69,7 +69,7 @@ temp deploy, sync org `main` to the deployed tree.
    `PORTAINER_API_KEY` (a fresh token from Portainer Settings -> Access
    tokens), `STACK_ID` (55=api, 56=dashboard, 57=ashenbot; the site is next).
 4. Verify locally: `curl -s http://<vps-ip>:8081/` returns the home page.
-5. The Cloudflare checklist below must land, then verify
+5. The game-box nginx + Cloudflare checklist below must land, then verify
    `https://ashencraft.overdev.net/`.
 
 Redeploys are automatic: every push to `main` runs the tests, pushes the image,
@@ -77,19 +77,37 @@ prunes Docker space on the VPS (disk-full incident lesson), and PUTs the
 checked-out `docker-compose.yml` as StackFileContent (never Portainer's stored
 copy - stored copies went stale and broke ashenbot and the API stack).
 
-## Cloudflare checklist (friend with zone access)
+## Hosting topology (2026-09-02)
 
-In order, before or while flipping `ashencraft.overdev.net` to the site:
+`ashencraft.overdev.net` is shared by the game server and the website - they
+never collide because they use different ports on the same box:
 
-1. Add `mc.ashencraft.overdev.net` -> game server IP (`2.80.36.114`), grey
-   cloud (DNS only) so Minecraft port 25565 keeps working. The client's default
-   join address is updated separately.
-2. Add `map.ashencraft.overdev.net` -> game server IP, TLS terminated on the
-   game box (same nginx/caddy that serves the current HTTPS map).
-3. Flip `ashencraft.overdev.net` to the VPS: proxied (orange cloud) record +
-   an origin rule sending requests to port 8081 (the site's host port).
-4. Redirect the old map URL: while `map.ashencraft.overdev.net` is live, add a
-   redirect rule from `ashencraft.overdev.net` map paths to the new map host.
+| Hostname | Port | Service | Where it runs |
+|:---|:---|:---|:---|
+| `ashencraft.overdev.net` | 25565 | Minecraft (join address, unchanged) | game box |
+| `ashencraft.overdev.net` | 443 | Website | game box nginx -> VPS:8081 (the `ashen-website` Portainer stack) |
+| `map.ashencraft.overdev.net` | 443 | AshenMap web map | game box (dynmap's own web server) |
+
+No `mc.` subdomain and no root record flip are needed; the DNS record stays
+grey-cloud on the game box exactly as it is today.
+
+## Game box nginx + Cloudflare checklist (friend with box/zone access)
+
+In order:
+
+1. **Game box nginx:** on the `ashencraft.overdev.net` server block, add
+   `location / { proxy_pass http://<vps-ip>:8081; }` (plus the usual proxy
+   headers) so the root serves the website from the VPS stack. The box already
+   terminates HTTPS for this name (it serves the current map).
+2. **Game box TLS:** extend the cert to also cover `map.ashencraft.overdev.net`
+   (e.g. `certbot --nginx -d ashencraft.overdev.net -d map.ashencraft.overdev.net`).
+3. **Game box nginx:** add a `server_name map.ashencraft.overdev.net` block
+   proxying to the same dynmap backend the root serves today.
+4. **Cloudflare:** add `map.ashencraft.overdev.net` -> game server IP
+   (`2.80.36.114`), proxied or grey-cloud both work for HTTPS; leave
+   `ashencraft.overdev.net` untouched.
+5. Old map bookmarks at the root now land on the website home page - the map
+   page there embeds the subdomain, so no redirect rule is required.
 
 ## House rules
 

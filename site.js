@@ -34,24 +34,35 @@
   }
   window.AshenSite.renderNav = renderNav;
 
-  var page = (location.pathname.split('/').pop() || 'index.html');
-  renderNav(page);
+  // The nav lives in the page body while this script loads in <head>, so the
+  // render (and the widget fetches, which also touch the DOM) must wait for
+  // the document to be parsed. Without this the nav silently never renders.
+  function init() {
+    var page = (location.pathname.split('/').pop() || 'index.html');
+    renderNav(page);
 
-  // Live widgets - every fetch has a static fallback, never blank the page.
-  fetch('/map/up/world/world/0', { headers: { Accept: 'application/json' } })
-    .then(function (r) { return r.ok ? r.json() : null; })
-    .then(function (feed) {
-      setText('players-online', formatOnline(feed && feed.currentcount));
-    })
-    .catch(function () { setText('players-online', formatOnline(null)); });
+    // Live widgets - every fetch has a static fallback, never blank the page.
+    fetch('/map/up/world/world/0', { headers: { Accept: 'application/json' } })
+      .then(function (r) { return r.ok ? r.json() : null; })
+      .then(function (feed) {
+        setText('players-online', formatOnline(feed && feed.currentcount));
+      })
+      .catch(function () { setText('players-online', formatOnline(null)); });
 
-  fetch('/api/launcher/version', { headers: { Accept: 'application/json' } })
-    .then(function (r) { return r.ok ? r.json() : null; })
-    .then(function (v) {
-      if (v && v.download_url) {
-        setHref('play-now', v.download_url);
-        setText('play-now-version', 'v' + v.version);
-      }
-    })
-    .catch(function () {});
+    fetch('/api/launcher/version', { headers: { Accept: 'application/json' } })
+      .then(function (r) { return r.ok ? r.json() : null; })
+      .then(function (v) {
+        if (v && v.download_url) {
+          setHref('play-now', v.download_url);
+          setText('play-now-version', 'v' + v.version);
+        }
+      })
+      .catch(function () {});
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', init);
+  } else {
+    init();
+  }
 })();

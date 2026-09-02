@@ -1,0 +1,18 @@
+# AshenCraft website - standalone Portainer stack (ashen-website).
+# The publish workflow ships THIS checked-out file as StackFileContent on
+# every redeploy (never Portainer's stored copy - stored copies went stale and
+# broke ashenbot and the API stack in 2026-08).
+name: ashen-website
+
+services:
+  ashen-website:
+    image: ghcr.io/ashenstudio/ashencraft-site:latest
+    container_name: ashen-website
+    pull_policy: always
+    ports:
+      - "${WEBSITE_PORT:-8081}:80"
+    environment:
+      - MAP_URL=${MAP_URL:-https://map.ashencraft.overdev.net}
+      - API_URL=${API_URL:-https://ashenapi.overdev.net}
+      - DISCORD_INVITE=${DISCORD_INVITE:-https://discord.gg/Y6nk7vnMzY}
+    restart: unless-stopped

@@ -12,14 +12,25 @@
     <script src="site.js?v=site-2"></script>
     <style>
         html, body { height: 100%; }
-        #site-nav { position: static; }
-        .map-shell { display: flex; flex-direction: column; height: calc(100vh - 60px); }
+        /* Flex column page: the nav keeps its natural height and the map fills
+           whatever is left - a wrapped nav on narrow screens never overflows. */
+        body { display: flex; flex-direction: column; }
+        #site-nav { position: static; flex: none; }
+        .map-shell { display: flex; flex-direction: column; flex: 1; min-height: 0; }
         .map-tools {
             display: flex; gap: 12px; align-items: center; justify-content: space-between;
             padding: 10px 24px; background: var(--panel); border-bottom: 1px solid var(--hairline);
+            flex: none;
         }
         .map-tools .btn { padding: 8px 14px; font-size: 13px; }
-        #map-frame { flex: 1; border: 0; width: 100%; background: #000; }
+        #map-frame { flex: 1; min-height: 0; border: 0; width: 100%; background: #000; }
+        @media (max-width: 640px) {
+            #site-nav { flex-wrap: wrap; height: auto; min-height: 60px; padding: 8px 12px; row-gap: 4px; }
+            #site-nav .brand { margin-right: 12px; }
+            .map-tools { flex-direction: column; align-items: stretch; gap: 10px; padding: 10px 14px; }
+            .map-tools > span:last-child { display: flex; gap: 10px; }
+            .map-tools .btn { flex: 1; justify-content: center; }
+        }
     </style>
 </head>
 <body>

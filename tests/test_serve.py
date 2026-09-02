@@ -109,15 +109,16 @@ def test_query_string_is_preserved(site):
 
 
 def test_site_config_is_not_cached(site):
-    import os
-
-    open("site-config.js", "w").write("window.ASHEN_SITE = {};")
+    # Probe the repo's real site-config.js and restore it - never delete it
+    # (it is a committed local-dev default).
+    original = open("site-config.js", "rb").read()
     try:
+        open("site-config.js", "w").write("window.ASHEN_SITE = {};")
         status, headers, _ = get(site + "/site-config.js")
         assert status == 200
         assert headers.get("cache-control") == "no-store"
     finally:
-        remove_when_free("site-config.js")
+        open("site-config.js", "wb").write(original)
 
 
 def test_upstream_down_returns_502(site):

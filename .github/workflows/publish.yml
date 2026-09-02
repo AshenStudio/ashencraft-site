@@ -47,10 +47,12 @@ jobs:
           PORTAINER_URL: ${{ secrets.PORTAINER_URL }}
           PORTAINER_API_KEY: ${{ secrets.PORTAINER_API_KEY }}
         run: |
-          curl -fsS -X POST -H "X-API-Key: $PORTAINER_API_KEY" \
+          # Cloudflare bot-blocks bare urllib/curl UAs from the runner (403/1010) -
+          # every Portainer call must carry a browser-ish User-Agent (ashenbot pattern).
+          curl -fsS -X POST -H "X-API-Key: $PORTAINER_API_KEY" -H "User-Agent: gh-actions" \
             "$PORTAINER_URL/api/endpoints/3/docker/images/prune" \
             -H "Content-Type: application/json" -d '{"filters":{}}' || true
-          curl -fsS -X POST -H "X-API-Key: $PORTAINER_API_KEY" \
+          curl -fsS -X POST -H "X-API-Key: $PORTAINER_API_KEY" -H "User-Agent: gh-actions" \
             "$PORTAINER_URL/api/endpoints/3/docker/build/prune" || true
       - name: Redeploy the ashen-website stack (checked-out compose)
         env:
@@ -77,7 +79,11 @@ jobs:
           req = urllib.request.Request(
               f"{base}/api/stacks/{stack_id}?endpointId=3",
               data=body, method="PUT",
-              headers={"X-API-Key": key, "Content-Type": "application/json"},
+              headers={
+                  "X-API-Key": key,
+                  "Content-Type": "application/json",
+                  "User-Agent": "gh-actions",
+              },
           )
           with urllib.request.urlopen(req, timeout=180) as resp:
               print("redeploy status:", resp.status)

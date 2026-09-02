@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Live Map - AshenCraft</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="theme.css?v=site-1" />
+    <script src="site-config.js?v=config-1"></script>
+    <script src="site.js?v=site-1"></script>
+    <style>
+        html, body { height: 100%; }
+        #site-nav { position: static; }
+        .map-shell { display: flex; flex-direction: column; height: calc(100vh - 60px); }
+        .map-tools {
+            display: flex; gap: 12px; align-items: center; justify-content: space-between;
+            padding: 10px 24px; background: var(--panel); border-bottom: 1px solid var(--hairline);
+        }
+        .map-tools .btn { padding: 8px 14px; font-size: 13px; }
+        #map-frame { flex: 1; border: 0; width: 100%; background: #000; }
+    </style>
+</head>
+<body>
+    <nav id="site-nav"></nav>
+    <div class="map-shell">
+        <div class="map-tools">
+            <span class="chip"><span class="dot"></span>Live world map</span>
+            <span>
+                <button id="map-fullscreen" class="btn btn-secondary" type="button">Fullscreen</button>
+                <a id="map-open" class="btn btn-secondary" href="https://map.ashencraft.overdev.net" target="_blank" rel="noopener">Open in new tab</a>
+            </span>
+        </div>
+        <iframe id="map-frame" title="AshenCraft live map" src="about:blank"></iframe>
+    </div>
+    <script>
+        (function () {
+            'use strict';
+            var cfg = window.ASHEN_SITE || {};
+            var frame = document.getElementById('map-frame');
+            var open = document.getElementById('map-open');
+            if (cfg.mapUrl) {
+                frame.src = cfg.mapUrl;
+                open.href = cfg.mapUrl;
+            }
+            document.getElementById('map-fullscreen').addEventListener('click', function () {
+                var el = frame;
+                if (el.requestFullscreen) { el.requestFullscreen(); }
+                else if (el.webkitRequestFullscreen) { el.webkitRequestFullscreen(); }
+            });
+        })();
+    </script>
+</body>
+</html>

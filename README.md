@@ -67,7 +67,7 @@ temp deploy, sync org `main` to the deployed tree.
    the pull succeeds.
 3. Set repo secrets: `PORTAINER_URL` = `https://ashendocker.overdev.net`,
    `PORTAINER_API_KEY` (a fresh token from Portainer Settings -> Access
-   tokens), `STACK_ID` (55=api, 56=dashboard, 57=ashenbot; the site is next).
+   tokens), `STACK_ID` (55=api, 56=dashboard, 57=ashenbot, **58=ashen-website**).
 4. Verify locally: `curl -s http://<vps-ip>:8081/` returns the home page.
 5. The game-box nginx + Cloudflare checklist below must land, then verify
    `https://ashencraft.overdev.net/`.

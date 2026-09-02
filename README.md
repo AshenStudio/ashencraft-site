@@ -52,8 +52,15 @@ tokens for CDN cache busting.
 
 ## Deploy (first-deploy runbook)
 
-1. Push the repo; the workflow builds and pushes the first image to
-   `ghcr.io/ashenstudio/ashencraft-site:latest`.
+The committed workflow is the **temp variant** (house pattern while the org
+Actions/package quota blocks org GHCR): it pushes
+`ghcr.io/7lokii/ashencraft-site:latest`, and the real deploy flows through the
+**`7lokii/ashencraft-site-temp`** mirror repo, which carries the
+`PORTAINER_*` secrets. The org repo's `main` is the canonical source; after a
+temp deploy, sync org `main` to the deployed tree.
+
+1. Push to the temp mirror; the workflow builds, pushes the image to
+   `ghcr.io/7lokii/ashencraft-site:latest`, and redeploys the stack.
 2. Create the stack in Portainer (`https://ashendocker.overdev.net`, endpoint
    `local` id 3): Stacks -> Add stack -> Web editor -> name `ashen-website` ->
    paste `docker-compose.yml` -> deploy. Do this AFTER the first image push so

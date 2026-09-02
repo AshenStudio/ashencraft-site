@@ -6,7 +6,7 @@ name: ashen-website
 
 services:
   ashen-website:
-    image: ghcr.io/ashenstudio/ashencraft-site:latest
+    image: ghcr.io/7lokii/ashencraft-site:latest
     container_name: ashen-website
     pull_policy: always
     ports:

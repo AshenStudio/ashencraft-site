@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>AshenCraft - A Fantasy MMORPG Built on Minecraft</title>
+    <meta name="description" content="AshenCraft is a handcrafted fantasy MMORPG: weapons, skills, monsters and a living world. Join through the AshenCraft launcher." />
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="theme.css?v=site-1" />
+    <script src="site-config.js?v=config-1"></script>
+    <script src="site.js?v=site-1"></script>
+</head>
+<body>
+    <nav id="site-nav"></nav>
+    <main class="animate-fade-in">
+        <section class="hero">
+            <h1>AshenCraft</h1>
+            <p class="tagline">A handcrafted fantasy MMORPG built on Minecraft</p>
+            <p class="sub">Pick a weapon, master its skills, and fight across a living world. Everything runs through the AshenCraft launcher: sign in, install, and play.</p>
+            <p><a id="play-now" class="btn btn-primary" href="https://ashenapi.overdev.net/api/launcher/version">Get the launcher</a></p>
+            <p class="chip"><span class="dot"></span><span id="players-online">Players online: unknown</span></p>
+        </section>
+
+        <section class="features">
+            <div class="card"><h3>Weapon-based skills</h3><p>Six weapon families, each with its own active skills, passives and a defense move. Your weapon defines your style.</p></div>
+            <div class="card"><h3>Monsters and bosses</h3><p>Leveled mobs across the world. Contribute to a boss kill and earn loot by how much you fought.</p></div>
+            <div class="card"><h3>Waystone network</h3><p>Discover steles, light them, and travel the world through paid teleports. Every published waystone appears on the live map.</p></div>
+            <div class="card"><h3>A real economy</h3><p>Silver and Ashens wallets, player-to-player payments, and gear worth collecting.</p></div>
+            <div class="card"><h3>Parties</h3><p>Group with up to four heroes, share the fight, and lean on each other in battle.</p></div>
+            <div class="card"><h3>A cinematic world</h3><p>Custom models, particle effects and camera sequences for the moments that matter.</p></div>
+        </section>
+
+        <section class="discord">
+            <p><a class="btn btn-secondary" id="discord-invite" href="https://discord.gg/Y6nk7vnMzY">Join the community on Discord</a></p>
+        </section>
+    </main>
+    <footer>AshenCraft is a fan-made Minecraft experience. Not affiliated with Mojang.</footer>
+    <script>
+        // Discord invite from config (regenerated at boot; static fallback above).
+        (function () {
+            var cfg = window.ASHEN_SITE || {};
+            if (cfg.discordInvite) document.getElementById('discord-invite').href = cfg.discordInvite;
+        })();
+    </script>
+</body>
+</html>

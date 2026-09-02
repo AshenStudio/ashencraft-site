@@ -49,6 +49,21 @@ def get(url, headers=None):
         return resp.status, dict(resp.headers), resp.read()
 
 
+def remove_when_free(path):
+    """Windows: the server thread can hold a file handle past the response;
+    retry the unlink instead of flaking (CI on ubuntu never hits this)."""
+    import os
+    import time
+
+    for _ in range(50):
+        try:
+            os.remove(path)
+            return
+        except PermissionError:
+            time.sleep(0.02)
+    os.remove(path)
+
+
 def test_home_page_is_served(site):
     status, _, body = get(site + "/")
     assert status == 200
@@ -64,7 +79,7 @@ def test_static_asset_is_served(site):
         assert status == 200
         assert b"probe" in body
     finally:
-        os.remove("probe.css")
+        remove_when_free("probe.css")
 
 
 def test_missing_static_asset_404s(site):
@@ -102,7 +117,7 @@ def test_site_config_is_not_cached(site):
         assert status == 200
         assert headers.get("cache-control") == "no-store"
     finally:
-        os.remove("site-config.js")
+        remove_when_free("site-config.js")
 
 
 def test_upstream_down_returns_502(site):

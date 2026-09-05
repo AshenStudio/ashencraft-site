@@ -56,6 +56,6 @@ def test_start_sh_defaults_when_env_empty(tmp_path):
     proc = run_start_sh({}, tmp_path)
     assert proc.returncode == 0, proc.stderr
     config = (tmp_path / "site-config.js").read_text()
-    assert "map.ashencraft.overdev.net" in config
+    assert "eu.ashencraft.overdev.net" in config
     assert "ashenapi.overdev.net" in config
     assert "discord.gg/Y6nk7vnMzY" in config

@@ -8,7 +8,7 @@ CONFIG_FILE="$CONFIG_DIR/site-config.js"
 
 cat > "$CONFIG_FILE" <<EOF
 window.ASHEN_SITE = {
-    mapUrl: '${MAP_URL:-https://map.ashencraft.overdev.net}',
+    mapUrl: '${MAP_URL:-https://eu.ashencraft.overdev.net}',
     apiUrl: '${API_URL:-https://ashenapi.overdev.net}',
     discordInvite: '${DISCORD_INVITE:-https://discord.gg/Y6nk7vnMzY}',
 };

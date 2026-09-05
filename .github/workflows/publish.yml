@@ -69,7 +69,7 @@ jobs:
               "StackFileContent": open("docker-compose.yml").read(),
               "Env": [
                   {"name": "WEBSITE_PORT", "value": "8081"},
-                  {"name": "MAP_URL", "value": "https://map.ashencraft.overdev.net"},
+                  {"name": "MAP_URL", "value": "https://eu.ashencraft.overdev.net"},
                   {"name": "API_URL", "value": "https://ashenapi.overdev.net"},
                   {"name": "DISCORD_INVITE", "value": "https://discord.gg/Y6nk7vnMzY"},
               ],

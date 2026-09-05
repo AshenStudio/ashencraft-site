@@ -20,7 +20,7 @@ from http.server import SimpleHTTPRequestHandler, ThreadingHTTPServer
 
 PORT = int(os.environ.get("PORT", "80"))
 API_URL = os.environ.get("API_URL", "https://ashenapi.overdev.net").rstrip("/")
-MAP_URL = os.environ.get("MAP_URL", "https://map.ashencraft.overdev.net").rstrip("/")
+MAP_URL = os.environ.get("MAP_URL", "https://eu.ashencraft.overdev.net").rstrip("/")
 
 _PASS_THROUGH = {"content-type", "cache-control", "etag"}
 

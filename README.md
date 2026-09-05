@@ -44,7 +44,7 @@ by `start.sh` from the stack env.
 | Route | Upstream | Prefix |
 |:---|:---|:---|
 | `/api/<path>` | `API_URL` (default `https://ashenapi.overdev.net`) | kept (`/api/launcher/version` -> `/api/launcher/version`) |
-| `/map/<path>` | `MAP_URL` (default `https://map.ashencraft.overdev.net`) | stripped (`/map/up/world/world/0` -> `/up/world/world/0`) |
+| `/map/<path>` | `MAP_URL` (default `https://eu.ashencraft.overdev.net`) | stripped (`/map/up/world/world/0` -> `/up/world/world/0`) |
 | `/site-config.js` | local file | served with `Cache-Control: no-store` |
 
 Every proxied response is `no-store`; the pages' static assets carry `?v=`
@@ -77,37 +77,43 @@ prunes Docker space on the VPS (disk-full incident lesson), and PUTs the
 checked-out `docker-compose.yml` as StackFileContent (never Portainer's stored
 copy - stored copies went stale and broke ashenbot and the API stack).
 
-## Hosting topology (2026-09-02)
+## Hosting topology (2026-09-05)
 
-`ashencraft.overdev.net` is shared by the game server and the website - they
-never collide because they use different ports on the same box:
+`eu.ashencraft.overdev.net` carries the game server AND the AshenMap web map
+on the game box; `ashencraft.overdev.net` serves the website from the VPS
+stack. The two hosts never collide:
 
 | Hostname | Port | Service | Where it runs |
 |:---|:---|:---|:---|
-| `ashencraft.overdev.net` | 25565 | Minecraft (join address, unchanged) | game box |
+| `eu.ashencraft.overdev.net` | 25565 | Minecraft (join address) | game box |
+| `eu.ashencraft.overdev.net` | 443 | AshenMap web map | game box (dynmap's own web server) |
 | `ashencraft.overdev.net` | 443 | Website | game box nginx -> VPS:8081 (the `ashen-website` Portainer stack) |
-| `map.ashencraft.overdev.net` | 443 | AshenMap web map | game box (dynmap's own web server) |
 
-No `mc.` subdomain and no root record flip are needed; the DNS record stays
-grey-cloud on the game box exactly as it is today.
+No `mc.` or `map.` subdomains are needed; the DNS records stay grey-cloud on
+the game box exactly as they are today.
 
 ## Game box nginx + Cloudflare checklist (friend with box/zone access)
 
-In order:
+The current state is already live: `eu.ashencraft.overdev.net` serves both the
+Minecraft join port (25565) and the AshenMap web UI (443, game box nginx), and
+`ashencraft.overdev.net` 443 proxies to the website stack on the VPS. If any
+of it needs re-creating after a re-provision:
 
-1. **Game box nginx:** on the `ashencraft.overdev.net` server block, add
+1. **Game box nginx:** add a `server_name eu.ashencraft.overdev.net` block
+   serving the AshenMap web UI (the same dynmap backend that previously lived
+   on `map.ashencraft.overdev.net`) and keep the Minecraft port 25565 bound on
+   the same hostname.
+2. **Game box nginx:** on the `ashencraft.overdev.net` server block, add
    `location / { proxy_pass http://<vps-ip>:8081; }` (plus the usual proxy
-   headers) so the root serves the website from the VPS stack. The box already
-   terminates HTTPS for this name (it serves the current map).
-2. **Game box TLS:** extend the cert to also cover `map.ashencraft.overdev.net`
-   (e.g. `certbot --nginx -d ashencraft.overdev.net -d map.ashencraft.overdev.net`).
-3. **Game box nginx:** add a `server_name map.ashencraft.overdev.net` block
-   proxying to the same dynmap backend the root serves today.
-4. **Cloudflare:** add `map.ashencraft.overdev.net` -> game server IP
-   (`2.80.36.114`), proxied or grey-cloud both work for HTTPS; leave
-   `ashencraft.overdev.net` untouched.
-5. Old map bookmarks at the root now land on the website home page - the map
-   page there embeds the subdomain, so no redirect rule is required.
+   headers) so the root serves the website from the VPS stack.
+3. **Game box TLS:** extend the cert to cover `eu.ashencraft.overdev.net` and
+   `ashencraft.overdev.net` (e.g. `certbot --nginx -d eu.ashencraft.overdev.net -d ashencraft.overdev.net`).
+4. **Cloudflare:** both `eu.ashencraft.overdev.net` and
+   `ashencraft.overdev.net` point at the game server IP (`2.80.36.114`),
+   grey-cloud (DNS only) so Minecraft port 25565 and the map HTTPS keep
+   working.
+5. Old map bookmarks at `map.ashencraft.overdev.net` are dead - the website's
+   map page embeds `eu.ashencraft.overdev.net`, so no redirect rule is required.
 
 ## House rules
 

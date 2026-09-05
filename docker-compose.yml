@@ -12,7 +12,7 @@ services:
     ports:
       - "${WEBSITE_PORT:-8081}:80"
     environment:
-      - MAP_URL=${MAP_URL:-https://map.ashencraft.overdev.net}
+      - MAP_URL=${MAP_URL:-https://eu.ashencraft.overdev.net}
       - API_URL=${API_URL:-https://ashenapi.overdev.net}
       - DISCORD_INVITE=${DISCORD_INVITE:-https://discord.gg/Y6nk7vnMzY}
     restart: unless-stopped

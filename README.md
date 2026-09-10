@@ -9,7 +9,7 @@ never hits CORS.
 
 | Page | File | What it does |
 |:---|:---|:---|
-| Home | `index.html` | Hero, features, Play now (live launcher download from the API), players-online chip (live from the map feed), Discord link |
+| Home | `index.html` | Sectioned page; the intro section carries the hero, the launcher + Discord CTAs, and the players-online chip (live from the map feed). More sections append below over time. |
 | Live Map | `map.html` | Full-viewport iframe of the AshenMap web UI with a fullscreen toggle |
 
 ## Local development

@@ -23,13 +23,29 @@
 html { background: var(--canvas); }
 body {
   margin: 0;
+  /* Fixed world-art backdrop (blurry Ashen valley) under the mood gradients;
+     a translucent canvas wash keeps text contrast at AA. Fixed attachment
+     so the art sits still while the page scrolls. */
   background:
+    linear-gradient(rgba(20, 16, 31, 0.72), rgba(20, 16, 31, 0.72)),
+    url('assets/ashen_background_light_blur.webp') center / cover no-repeat fixed,
     radial-gradient(1200px 600px at 80% -10%, rgba(200, 164, 90, 0.08), transparent 60%),
     radial-gradient(900px 500px at -10% 110%, rgba(130, 67, 242, 0.07), transparent 60%),
     var(--canvas);
   color: var(--cream);
   font-family: var(--body);
   min-height: 100vh;
+}
+
+/* iOS Safari ignores background-attachment: fixed; give those clients the
+   gradients-only night canvas so the art never half-renders mid-scroll. */
+@supports (-webkit-touch-callout: none) {
+  body {
+    background:
+      radial-gradient(1200px 600px at 80% -10%, rgba(200, 164, 90, 0.08), transparent 60%),
+      radial-gradient(900px 500px at -10% 110%, rgba(130, 67, 242, 0.07), transparent 60%),
+      var(--canvas);
+  }
 }
 
 h1, h2, h3, .btn, .brand { font-family: var(--script); }

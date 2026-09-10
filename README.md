@@ -32,7 +32,7 @@ by `start.sh` from the stack env.
 |:---|:---|
 | `serve.py` | Static server + same-origin proxy (stdlib only) |
 | `site.js` | Nav injection (single source) + live widgets with static fallbacks |
-| `theme.css` | Canonical dark palette (AshenStudio design system) |
+| `theme.css` | Canonical AshenCraft night-fantasy palette (violet-charcoal ground, gilt gold accents) |
 | `start.sh` | Container entrypoint - regenerates `site-config.js`, then execs `serve.py` |
 | `Dockerfile` | Static-file image (`python:3-slim`) |
 | `docker-compose.yml` | The `ashen-website` Portainer stack (port 8081 default) |

@@ -14,27 +14,18 @@
 </head>
 <body>
     <nav id="site-nav"></nav>
-    <main class="animate-fade-in">
-        <section class="hero">
+    <main>
+        <section id="intro" class="home-section">
             <h1>AshenCraft</h1>
             <p class="tagline">A handcrafted fantasy MMORPG built on Minecraft</p>
             <p class="sub">Pick a weapon, master its skills, and fight across a living world. Everything runs through the AshenCraft launcher: sign in, install, and play.</p>
-            <p><a id="play-now" class="btn btn-primary" href="https://ashenapi.overdev.net/api/launcher/version">Get the launcher</a></p>
+            <div class="cta-row">
+                <a id="play-now" class="btn btn-primary" href="https://ashenapi.overdev.net/api/launcher/version">Get the launcher</a>
+                <a id="discord-invite" class="btn btn-secondary" href="https://discord.gg/Y6nk7vnMzY">Join the community on Discord</a>
+            </div>
             <p class="chip"><span class="dot"></span><span id="players-online">Players online: unknown</span></p>
         </section>
-
-        <section class="features">
-            <div class="card"><h3>Weapon-based skills</h3><p>Six weapon families, each with its own active skills, passives and a defense move. Your weapon defines your style.</p></div>
-            <div class="card"><h3>Monsters and bosses</h3><p>Leveled mobs across the world. Contribute to a boss kill and earn loot by how much you fought.</p></div>
-            <div class="card"><h3>Waystone network</h3><p>Discover steles, light them, and travel the world through paid teleports. Every published waystone appears on the live map.</p></div>
-            <div class="card"><h3>A real economy</h3><p>Silver and Ashens wallets, player-to-player payments, and gear worth collecting.</p></div>
-            <div class="card"><h3>Parties</h3><p>Group with up to four heroes, share the fight, and lean on each other in battle.</p></div>
-            <div class="card"><h3>A cinematic world</h3><p>Custom models, particle effects and camera sequences for the moments that matter.</p></div>
-        </section>
-
-        <section class="discord">
-            <p><a class="btn btn-secondary" id="discord-invite" href="https://discord.gg/Y6nk7vnMzY">Join the community on Discord</a></p>
-        </section>
+    </main>
     </main>
     <footer>AshenCraft is a fan-made Minecraft experience. Not affiliated with Mojang.</footer>
     <script>

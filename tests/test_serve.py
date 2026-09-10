@@ -20,7 +20,10 @@ class UpstreamHandler(BaseHTTPRequestHandler):
         self.wfile.write(body)
 
     def do_GET(self):
-        self._reply(json.dumps({"path": self.path}).encode())
+        self._reply(json.dumps({
+            "path": self.path,
+            "auth": self.headers.get("Authorization"),
+        }).encode())
 
     def do_POST(self):
         length = int(self.headers.get("content-length") or 0)
@@ -28,6 +31,7 @@ class UpstreamHandler(BaseHTTPRequestHandler):
             "path": self.path,
             "body": self.rfile.read(length).decode(),
             "content_type": self.headers.get("content-type"),
+            "auth": self.headers.get("Authorization"),
         }
         self._reply(json.dumps({"echo": UpstreamHandler.seen_post["body"]}).encode())
 
@@ -106,19 +110,28 @@ def test_missing_static_asset_404s(site):
 def test_api_route_forwards_with_prefix(site):
     status, _, body = get(site + "/api/launcher/version")
     assert status == 200
-    assert json.loads(body) == {"path": "/api/launcher/version"}
+    assert json.loads(body) == {"path": "/api/launcher/version", "auth": None}
+
+
+def test_api_route_forwards_authorization_header(site):
+    # Signed-in calls (/api/identities, /api/craft/characters) ride the
+    # proxy with the browser's bearer token - the proxy must not drop it
+    # (dropping it 401s the account page back into the sign-in form).
+    status, _, body = get(site + "/api/identities", headers={"Authorization": "Bearer tok-abc"})
+    assert status == 200
+    assert json.loads(body) == {"path": "/api/identities", "auth": "Bearer tok-abc"}
 
 
 def test_map_route_forwards_without_prefix(site):
     status, _, body = get(site + "/map/up/world/world/0")
     assert status == 200
-    assert json.loads(body) == {"path": "/up/world/world/0"}
+    assert json.loads(body)["path"] == "/up/world/world/0"
 
 
 def test_query_string_is_preserved(site):
     status, _, body = get(site + "/map/up/world/world/0?x=1")
     assert status == 200
-    assert json.loads(body) == {"path": "/up/world/world/0?x=1"}
+    assert json.loads(body)["path"] == "/up/world/world/0?x=1"
 
 
 def test_site_config_is_not_cached(site):
@@ -212,6 +225,17 @@ def test_post_forwards_body_to_api(site):
     assert json.loads(body) == {"echo": '{"username":"u","password":"p"}'}
     assert UpstreamHandler.seen_post["path"] == "/api/auth/login"
     assert UpstreamHandler.seen_post["content_type"] == "application/json"
+
+
+def test_post_forwards_authorization_header(site):
+    status, _, _ = get(
+        site + "/api/auth/logout",
+        method="POST",
+        data=b'{}',
+        headers={"Content-Type": "application/json", "Authorization": "Bearer tok-xyz"},
+    )
+    assert status == 200
+    assert UpstreamHandler.seen_post["auth"] == "Bearer tok-xyz"
 
 
 def test_post_outside_api_is_rejected(site):

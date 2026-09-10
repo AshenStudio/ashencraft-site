@@ -48,17 +48,22 @@ def _read_static(handler, filename):
 
 
 def _proxy(base_url: str, path: str, query: str, body: bytes | None = None,
-           content_type: str | None = None, method: str = "GET"):
+           content_type: str | None = None, method: str = "GET",
+           auth_header: str | None = None):
     """Forward a request to {base_url}/{path}?{query}.
 
     Returns (status, headers, body-bytes). POST carries the caller's body so
     the auth endpoints (/api/auth/login, /api/auth/register) work same-origin
-    from the website.
+    from the website. The caller's Authorization header is forwarded so the
+    signed-in endpoints (/api/identities, /api/craft/characters) see the
+    browser's bearer token.
     """
     url = f"{base_url}/{path}"
     if query:
         url = f"{url}?{query}"
     headers = {"User-Agent": "AshenSite/1.0"}
+    if auth_header:
+        headers["Authorization"] = auth_header
     data = None
     if method == "POST":
         data = body or b""
@@ -93,7 +98,8 @@ class SiteHandler(SimpleHTTPRequestHandler):
             length = int(self.headers.get("content-length") or 0)
             body = self.rfile.read(length) if length else b""
             result = _proxy(API_URL, path, parsed.query, body=body,
-                            content_type=self.headers.get("content-type"), method="POST")
+                            content_type=self.headers.get("content-type"), method="POST",
+                            auth_header=self.headers.get("Authorization"))
             return self._reply_proxy(result, head_only=False)
         self.send_error(405)
 
@@ -103,7 +109,11 @@ class SiteHandler(SimpleHTTPRequestHandler):
         if path == "site-config.js":
             return self._serve_no_store("site-config.js", head_only)
         if path.startswith("api/"):
-            return self._reply_proxy(_proxy(API_URL, path, parsed.query), head_only)
+            return self._reply_proxy(
+                _proxy(API_URL, path, parsed.query,
+                       auth_header=self.headers.get("Authorization")),
+                head_only,
+            )
         if path.startswith("avatar/"):
             return self._serve_avatar(path[len("avatar/"):], head_only)
         if path.startswith("map/"):

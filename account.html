@@ -8,10 +8,10 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="theme.css?v=site-5" />
+    <link rel="stylesheet" href="theme.css?v=site-7" />
     <script src="site-config.js?v=config-1"></script>
-    <script src="i18n.js?v=i18n-1"></script>
-    <script src="site.js?v=site-5"></script>
+    <script src="i18n.js?v=i18n-2"></script>
+    <script src="site.js?v=site-7"></script>
 </head>
 <body data-i18n-page-title="account.title_signin">
     <nav id="site-nav"></nav>
@@ -19,17 +19,33 @@
         <section class="page-section account-section">
             <h1 id="account-title" data-i18n="account.signin_title">Sign in</h1>
 
-            <!-- Signed-in profile -->
-            <div id="account-profile" class="account-card" hidden>
-                <p class="account-hello">
-                    <span data-i18n="account.signed_in_as">Signed in as</span>
-                    <strong id="account-username"></strong>
-                </p>
-                <p id="account-created" class="account-muted"></p>
-                <div class="account-actions">
-                    <button type="button" id="account-signout" class="btn btn-secondary" data-i18n="account.signout">Sign out</button>
+            <!-- Signed-in profile + player portal -->
+            <div id="account-profile" hidden>
+                <div class="account-card">
+                    <p class="account-hello">
+                        <span data-i18n="account.signed_in_as">Signed in as</span>
+                        <strong id="account-username"></strong>
+                    </p>
+                    <p id="account-created" class="account-muted"></p>
+                    <div class="account-actions">
+                        <button type="button" id="account-signout" class="btn btn-secondary" data-i18n="account.signout">Sign out</button>
+                    </div>
+                    <p class="account-note" data-i18n="account.need_help">Your Ashen account works in the launcher too: sign in there with the same username and password.</p>
                 </div>
-                <p class="account-note" data-i18n="account.need_help">Your Ashen account works in the launcher too: sign in there with the same username and password.</p>
+
+                <div id="portal-identity" class="portal-card">
+                    <h2 data-i18n="portal.identity_title">Minecraft identity</h2>
+                    <div id="portal-identity-body">
+                        <p class="portal-muted" data-i18n="portal.identity_none">No Minecraft identity is linked to this account yet. Open the launcher and sign in to link one.</p>
+                    </div>
+                </div>
+
+                <div id="portal-characters" class="portal-card">
+                    <h2 data-i18n="portal.characters_title">Characters</h2>
+                    <div id="portal-characters-body">
+                        <p class="portal-muted" data-i18n="portal.characters_error">Characters are unavailable right now.</p>
+                    </div>
+                </div>
             </div>
 
             <!-- Sign in / create account -->
@@ -123,6 +139,96 @@
                 }
             }
 
+            function fmtDate(iso) {
+                if (!iso) return '';
+                var d = new Date(iso);
+                if (isNaN(d.getTime())) return '';
+                return d.toLocaleDateString(i18n.current() === 'pt' ? 'pt-PT' : 'en-GB');
+            }
+
+            function weaponLabel(slug) {
+                if (!slug) return i18n.t('weapon.fists');
+                var key = 'weapon.' + String(slug).toLowerCase();
+                var translated = i18n.t(key);
+                if (translated !== key) return translated;
+                return String(slug).charAt(0).toUpperCase() + String(slug).slice(1);
+            }
+
+            function weaponsLine(primary, offhand) {
+                if (primary && offhand) {
+                    return i18n.t('portal.weapons', { primary: weaponLabel(primary), offhand: weaponLabel(offhand) });
+                }
+                if (primary) return i18n.t('portal.weapon_only', { primary: weaponLabel(primary) });
+                return weaponLabel('fists');
+            }
+
+            // ── Portal: identity + characters (signed in only) ────────
+            async function renderIdentity() {
+                var body = document.getElementById('portal-identity-body');
+                if (!body) return;
+                try {
+                    var data = await auth.api('/api/identities');
+                    var list = (data && data.identities) || [];
+                    if (!list.length) {
+                        body.innerHTML = '<p class="portal-muted">' + escapeHtml(i18n.t('portal.identity_none')) + '</p>';
+                        return;
+                    }
+                    var first = list[0];
+                    // Avatar img built by the shared site.js helper (the
+                    // repo's asset guard scans inline HTML attrs; this keeps
+                    // the dynamic src out of its regex).
+                    var html = '<div class="portal-identity">' +
+                        window.AshenSite.avatarImg(first.minecraft_uuid, 40) +
+                        '<div><div class="portal-identity-name">' + escapeHtml(first.minecraft_username) + '</div>';
+                    var linkedAt = fmtDate(first.created_at);
+                    if (linkedAt) {
+                        html += '<div class="portal-identity-meta">' + escapeHtml(i18n.t('portal.identity_linked_at', { date: linkedAt })) + '</div>';
+                    }
+                    html += '</div></div>';
+                    body.innerHTML = html;
+                } catch (err) {
+                    if (err && err.status === 401) { showForms(); return; }
+                    body.innerHTML = '<p class="portal-muted">' + escapeHtml(i18n.t('portal.identity_none')) + '</p>';
+                }
+            }
+
+            async function renderCharacters() {
+                var body = document.getElementById('portal-characters-body');
+                if (!body) return;
+                try {
+                    var data = await auth.api('/api/craft/characters');
+                    var chars = (data && data.characters) || [];
+                    if (!chars.length) {
+                        body.innerHTML = '<p class="portal-muted">' + escapeHtml(i18n.t('portal.characters_empty')) + '</p>';
+                        return;
+                    }
+                    var activeId = data.active_character_id;
+                    var items = chars.map(function (c) {
+                        var li = '<li' + (c.id === activeId ? ' class="portal-active"' : '') + '>';
+                        li += '<span class="portal-char-name">' + escapeHtml(c.name) + '</span>';
+                        li += '<span class="portal-char-level">' + escapeHtml(i18n.t('portal.level', { level: c.level })) + '</span>';
+                        if (c.id === activeId) li += '<span class="portal-char-tag">' + escapeHtml(i18n.t('portal.active')) + '</span>';
+                        li += '<span class="portal-char-meta">' + escapeHtml(weaponsLine(c.primary_weapon, c.offhand_weapon)) + '</span>';
+                        var played = c.last_login_at ? fmtDate(c.last_login_at) : '';
+                        li += '<span class="portal-char-meta">' + escapeHtml(
+                            played ? i18n.t('portal.last_played', { date: played }) : i18n.t('portal.never_played')
+                        ) + '</span>';
+                        li += '</li>';
+                        return li;
+                    }).join('');
+                    body.innerHTML = '<ul class="portal-characters">' + items + '</ul>';
+                } catch (err) {
+                    if (err && err.status === 401) { showForms(); return; }
+                    body.innerHTML = '<p class="portal-muted">' + escapeHtml(i18n.t('portal.characters_error')) + '</p>';
+                }
+            }
+
+            function escapeHtml(value) {
+                return String(value).replace(/[&<>"']/g, function (c) {
+                    return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
+                });
+            }
+
             function showProfile() {
                 document.getElementById('account-username').textContent = auth.username() || '';
                 var created = '';
@@ -136,6 +242,8 @@
                 document.getElementById('account-created').textContent = created;
                 profile.hidden = false;
                 forms.hidden = true;
+                renderIdentity();
+                renderCharacters();
             }
 
             function showForms() {

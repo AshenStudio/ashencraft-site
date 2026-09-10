@@ -95,6 +95,35 @@ h1, h2, h3, .btn, .brand { font-family: var(--script); }
   padding: 6px 12px; border-radius: 8px;
 }
 .nav-auth-btn:hover { background: rgba(200, 164, 90, 0.16); color: var(--cream); }
+/* Signed-in account chip: skin-head avatar + name, opens the account
+   dropdown (same hover/focus pattern as the Community dropdown). */
+.nav-account-btn {
+  display: inline-flex; align-items: center; gap: 8px;
+  background: none; border: 0; cursor: pointer;
+  color: var(--parchment); font-family: var(--body); font-size: 14px; font-weight: 600;
+  padding: 6px 12px 6px 8px; border-radius: 10px;
+}
+.nav-account-btn:hover, .nav-account-btn:focus-visible {
+  background: rgba(200, 164, 90, 0.16); color: var(--cream); outline: none;
+}
+.nav-account-btn .nav-avatar {
+  width: 24px; height: 24px; border-radius: 6px;
+  border: 1px solid var(--hairline); background: var(--panel);
+  image-rendering: pixelated; flex: none;
+}
+.nav-account-menu {
+  right: 0; left: auto !important; min-width: 170px;
+}
+.nav-account-menu a,
+.nav-account-menu button {
+  display: block; width: 100%; text-align: left;
+  padding: 9px 12px; border-radius: 7px; border: 0; background: none; cursor: pointer;
+  color: var(--parchment); text-decoration: none; font-size: 14px; font-weight: 500;
+  font-family: var(--body);
+}
+.nav-account-menu a:hover,
+.nav-account-menu button:hover { background: rgba(200, 164, 90, 0.16); color: var(--cream); }
+
 .nav-lang { display: inline-flex; align-items: center; gap: 2px; margin-left: 10px; }
 .nav-lang-btn {
   background: none; border: 0; cursor: pointer; padding: 6px 8px; border-radius: 7px;
@@ -184,6 +213,35 @@ section[id] { scroll-margin-top: 70px; }
 .account-muted { margin: 0; font-size: 13px; color: rgba(242, 232, 213, 0.6); }
 .account-actions { display: flex; gap: 10px; }
 .account-note { margin: 0; font-size: 12.5px; color: rgba(242, 232, 213, 0.55); line-height: 1.55; }
+
+/* Player portal (identity + characters cards on the account page) */
+.portal-card {
+  background: var(--panel); border: 1px solid var(--hairline); border-radius: var(--radius);
+  padding: 22px 24px; margin-top: 18px;
+}
+.portal-card h2 {
+  margin: 0 0 14px; font-size: 18px; color: var(--gold-text);
+  font-family: var(--script); letter-spacing: 0.5px;
+}
+.portal-identity { display: flex; align-items: center; gap: 14px; }
+.portal-identity .nav-avatar { width: 40px; height: 40px; border-radius: 8px; }
+.portal-identity-name { font-weight: 600; color: var(--cream); }
+.portal-identity-meta { font-size: 12.5px; color: rgba(242, 232, 213, 0.6); }
+.portal-muted { margin: 0; font-size: 13.5px; color: rgba(242, 232, 213, 0.6); line-height: 1.6; }
+.portal-characters { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 10px; }
+.portal-characters li {
+  display: flex; flex-wrap: wrap; align-items: baseline; gap: 6px 12px;
+  padding: 10px 14px; border: 1px solid var(--hairline); border-radius: 9px;
+  background: var(--panel-strong);
+}
+.portal-characters li.portal-active { border-color: rgba(200, 164, 90, 0.55); }
+.portal-char-name { font-weight: 700; color: var(--cream); font-size: 15px; }
+.portal-char-level { font-size: 13px; color: var(--gold-text); font-weight: 600; }
+.portal-char-tag {
+  font-size: 11px; font-weight: 700; letter-spacing: 0.5px; text-transform: uppercase;
+  color: #241A08; background: var(--gold); border-radius: 6px; padding: 2px 8px;
+}
+.portal-char-meta { font-size: 12.5px; color: rgba(242, 232, 213, 0.6); }
 
 footer {
   text-align: center; padding: 32px; color: rgba(242, 232, 213, 0.55);

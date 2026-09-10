@@ -4,6 +4,7 @@
 Routes:
   /api/<path>      -> forwarded to {API_URL}/api/<path>  (prefix kept)
   /map/<path>      -> forwarded to {MAP_URL}/<path>      (prefix stripped)
+  /avatar/<uuid>   -> Minecraft skin head PNG from the configured avatar CDN
   /site-config.js  -> served with Cache-Control: no-store (regenerated at boot)
   /<page>          -> <page>.html when it exists (extensionless URLs)
   /community/<page>-> community/<page>.html the same way
@@ -11,10 +12,11 @@ Routes:
   everything else  -> static files from the repo directory
 
 Stdlib only. The proxy exists so the browser never makes cross-origin
-requests: the map feed (/up/...), the launcher download and the account
-endpoints (/api/auth/*) are all reached same-origin through this server,
-sidestepping CORS entirely. GET/HEAD serve pages + proxy; POST forwards
-to the API only (login/register/logout are the site's only writes).
+requests: the map feed (/up/...), the launcher download, the account
+endpoints (/api/auth/*, /api/identities, /api/characters) and the skin
+heads are all reached same-origin through this server, sidestepping CORS
+entirely. GET/HEAD serve pages + proxy; POST forwards to the API only
+(login/register/logout are the site's only writes).
 """
 import functools
 import os
@@ -26,6 +28,11 @@ from http.server import SimpleHTTPRequestHandler, ThreadingHTTPServer
 PORT = int(os.environ.get("PORT", "80"))
 API_URL = os.environ.get("API_URL", "https://ashenapi.overdev.net").rstrip("/")
 MAP_URL = os.environ.get("MAP_URL", "https://eu.ashencraft.overdev.net").rstrip("/")
+AVATAR_URL = os.environ.get("AVATAR_URL", "https://mc-heads.net").rstrip("/")
+
+_UUID_RE = __import__("re").compile(
+    r"^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$"
+)
 
 _PASS_THROUGH = {"content-type", "cache-control", "etag"}
 
@@ -97,6 +104,8 @@ class SiteHandler(SimpleHTTPRequestHandler):
             return self._serve_no_store("site-config.js", head_only)
         if path.startswith("api/"):
             return self._reply_proxy(_proxy(API_URL, path, parsed.query), head_only)
+        if path.startswith("avatar/"):
+            return self._serve_avatar(path[len("avatar/"):], head_only)
         if path.startswith("map/"):
             return self._reply_proxy(_proxy(MAP_URL, path[len("map/"):], parsed.query), head_only)
         if path.endswith(".html"):
@@ -115,6 +124,30 @@ class SiteHandler(SimpleHTTPRequestHandler):
             if _read_static(self, candidate) is not None:
                 return self._serve_local(candidate, head_only)
         self.send_error(404)
+
+    def _serve_avatar(self, uuid: str, head_only: bool):
+        """Serve a Minecraft skin head as same-origin PNG bytes.
+
+        Only well-formed UUIDs are forwarded (the upstream is a public
+        CDN); a cacheable 24h TTL keeps repeat visits cheap. Any upstream
+        failure becomes a 502 and the page falls back to its "?" chip.
+        """
+        if not _UUID_RE.match(uuid or ""):
+            self.send_error(404)
+            return
+        status, headers, body = _proxy(
+            AVATAR_URL, f"avatar/{uuid}/32", "", method="GET"
+        )
+        if status != 200:
+            self.send_error(502)
+            return
+        self.send_response(200)
+        self.send_header("content-type", "image/png")
+        self.send_header("content-length", str(len(body)))
+        self.send_header("cache-control", "public, max-age=86400")
+        self.end_headers()
+        if not head_only:
+            self.wfile.write(body)
 
     def _redirect(self, target):
         self.send_response(301)

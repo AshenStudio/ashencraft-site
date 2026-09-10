@@ -86,16 +86,22 @@
     login: siteLogin,
     register: siteRegister,
     logout: siteLogout,
+    api: siteApi,
     TOKEN_KEY: TOKEN_KEY,
   };
 
   // ── Pages and nav ──────────────────────────────────────────────────────
-  // Extensionless URLs are canonical (/login, /community/bedrock); the
+  // Extensionless URLs are canonical (/account, /community/bedrock); the
   // server 301s the legacy .html paths onto them. Nav hrefs therefore never
-  // carry .html, and the base prefix keeps them resolving from /community/*.
+  // carry .html. The base prefix keeps relative links resolving from
+  // /community/* pages; the home address is special-cased to the ROOT
+  // (href("") would self-link, which "refreshed" the map/account pages).
   var depth = (location.pathname.replace(/\/+$/, '').split('/').length - 1);
   var base = depth > 1 ? '../' : '';
-  function href(p) { return base + p; }
+  function href(p) {
+    if (p === '' || p === 'index') return base ? base : '/';
+    return base + p;
+  }
 
   var NAV = [
     { href: '', labelKey: 'nav.home', key: 'home' },
@@ -137,7 +143,7 @@
     if (count === 1) return t('home.players_one');
     return t('home.players_many', { count: count });
   }
-  window.AshenSite = { formatOnline: formatOnline };
+  window.AshenSite = { formatOnline: formatOnline, avatarImg: avatarImgHtml };
 
   function escapeHtml(value) {
     return String(value).replace(/[&<>"']/g, function (c) {
@@ -145,15 +151,73 @@
     });
   }
 
-  function authNavHtml(t) {
-    if (siteIsAuthenticated()) {
-      return '<span class="nav-account" id="nav-account">' +
-        '<span class="nav-account-label">' + escapeHtml(t('nav.account_as')) + ' <strong>' +
-        escapeHtml(readJson(USER_KEY) || '') + '</strong></span>' +
-        '<button type="button" class="nav-auth-btn" id="nav-logout">' + escapeHtml(t('nav.logout')) + '</button>' +
-        '</span>';
+  // ── Minecraft identity (avatar chip) ───────────────────────────────────
+  // The skin head comes from this site's own /avatar/<uuid> proxy (no
+  // third-party browser requests). Until it resolves - or when the account
+  // has no linked identity at all - a "?" chip stands in, so the nav never
+  // depends on the fetch to be usable.
+  var PLACEHOLDER_AVATAR =
+    'data:image/svg+xml,' +
+    encodeURIComponent(
+      '<svg xmlns="http://www.w3.org/2000/svg" width="32" height="32">' +
+      '<rect width="32" height="32" rx="6" fill="#221B38"/>' +
+      '<text x="16" y="22" font-family="Inter,Segoe UI,sans-serif" font-size="16" ' +
+      'font-weight="700" fill="#C9BFE0" text-anchor="middle">?</text></svg>'
+    );
+
+  function identityState() {
+    return window.__ashenIdentity || { uuid: null, name: null, loaded: false };
+  }
+
+  async function loadIdentity() {
+    try {
+      var data = await siteApi('/api/identities');
+      var list = (data && data.identities) || [];
+      var first = list.length ? list[0] : null;
+      window.__ashenIdentity = {
+        uuid: first ? first.minecraft_uuid : null,
+        name: first ? first.minecraft_username : null,
+        loaded: true,
+      };
+    } catch (e) {
+      // Identities are decorative - a dead API keeps the plain "?" chip.
+      window.__ashenIdentity = { uuid: null, name: null, loaded: true, failed: true };
     }
-    return '<a class="nav-auth-link" id="nav-login" href="' + href('account') + '">' + escapeHtml(t('nav.login')) + '</a>';
+    renderNav();
+  }
+
+  function avatarSrc() {
+    var uuid = typeof uuidArg === 'string' ? uuidArg : identityState().uuid;
+    if (uuid && /^[0-9a-fA-F-]{36}$/.test(uuid)) {
+      return '/avatar/' + uuid;
+    }
+    return PLACEHOLDER_AVATAR;
+  }
+
+  function avatarImgHtml(uuid, size) {
+    // One shared builder for nav chip + account portal; size defaults to
+    // the nav's 24px chip.
+    size = size || 24;
+    uuidArg = uuid;
+    return '<img class="nav-avatar" alt="" width="' + size + '" height="' + size + '" src="' + avatarSrc() + '" />';
+  }
+  var uuidArg = null;
+
+  function accountChipHtml(t) {
+    var username = readJson(USER_KEY) || '';
+    var identity = identityState();
+    var label = escapeHtml(identity.loaded && identity.name ? identity.name : username);
+    return (
+      '<div class="nav-dropdown nav-account" id="nav-account">' +
+      '<button type="button" class="nav-dropbtn nav-account-btn" id="nav-account-btn" aria-haspopup="true">' +
+      avatarImgHtml() +
+      '<span class="nav-account-name">' + label + '</span>' +
+      '</button>' +
+      '<div class="nav-dropdown-content nav-account-menu">' +
+      '<a href="' + href('account') + '" data-i18n="nav.account_page">' + escapeHtml(t('nav.account_page')) + '</a>' +
+      '<button type="button" id="nav-logout" data-i18n="nav.logout">' + escapeHtml(t('nav.logout')) + '</button>' +
+      '</div></div>'
+    );
   }
 
   function langSwitcherHtml(t) {
@@ -210,11 +274,15 @@
       return link(item);
     }).join('');
 
+    var accountBlock = siteIsAuthenticated()
+      ? accountChipHtml(t)
+      : '<a class="nav-auth-link" id="nav-login" href="' + href('account') + '">' + escapeHtml(t('nav.login')) + '</a>';
+
     host.innerHTML =
       '<a href="' + href('') + '" class="brand">AshenCraft</a>' +
       links +
       '<span class="nav-spacer"></span>' +
-      authNavHtml(t) +
+      accountBlock +
       langSwitcherHtml(t);
 
     bindNavHandlers(t);
@@ -227,6 +295,8 @@
   function init() {
     window.AshenI18n.apply(window.AshenI18n.initial());
     renderNav();
+
+    if (siteIsAuthenticated()) loadIdentity();
 
     // Re-render the nav after every language switch (the auth block and the
     // switcher labels are part of the nav markup).

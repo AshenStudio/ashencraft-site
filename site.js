@@ -3,7 +3,7 @@
   var cfg = window.ASHEN_SITE || {};
   var NAV = [
     { href: 'index.html', label: 'Home' },
-    { href: 'map.html', label: 'Live Map' },
+    { href: 'map.html', label: 'Map' },
   ];
 
   function setText(id, text) {

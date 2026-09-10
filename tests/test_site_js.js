@@ -59,7 +59,7 @@ function runScript(doc) {
   const navHtml = calls['site-nav'].innerHTML;
   assert.ok(navHtml.includes('>AshenCraft</a>'), 'nav has the brand');
   assert.ok(navHtml.includes('>Home</a>'), 'nav has Home link');
-  assert.ok(navHtml.includes('>Live Map</a>'), 'nav has Live Map link');
+  assert.ok(navHtml.includes('>Map</a>'), 'nav has Map link');
   assert.ok(navHtml.includes('class="active"'), 'current page (map.html) is marked active');
 }
 
@@ -77,7 +77,7 @@ function runScript(doc) {
 
   const navHtml = calls['site-nav'].innerHTML;
   assert.ok(navHtml.includes('>Home</a>'), 'nav has Home link');
-  assert.ok(navHtml.includes('>Live Map</a>'), 'nav has Live Map link');
+  assert.ok(navHtml.includes('>Map</a>'), 'nav has Map link');
   assert.ok(navHtml.includes('class="active"'), 'current page is marked active');
 
   setTimeout(() => {

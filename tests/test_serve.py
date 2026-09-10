@@ -10,13 +10,26 @@ import serve
 class UpstreamHandler(BaseHTTPRequestHandler):
     """Echoes the request path as JSON so tests can assert forwarding."""
 
-    def do_GET(self):
-        body = json.dumps({"path": self.path}).encode()
+    seen_post = {}
+
+    def _reply(self, body: bytes):
         self.send_response(200)
         self.send_header("content-type", "application/json")
         self.send_header("content-length", str(len(body)))
         self.end_headers()
         self.wfile.write(body)
+
+    def do_GET(self):
+        self._reply(json.dumps({"path": self.path}).encode())
+
+    def do_POST(self):
+        length = int(self.headers.get("content-length") or 0)
+        UpstreamHandler.seen_post = {
+            "path": self.path,
+            "body": self.rfile.read(length).decode(),
+            "content_type": self.headers.get("content-type"),
+        }
+        self._reply(json.dumps({"echo": UpstreamHandler.seen_post["body"]}).encode())
 
     def log_message(self, *args):
         pass
@@ -41,10 +54,10 @@ def site(upstream):
     server.shutdown()
 
 
-def get(url, headers=None):
+def get(url, headers=None, method=None, data=None):
     import urllib.request
 
-    req = urllib.request.Request(url, headers=headers or {})
+    req = urllib.request.Request(url, headers=headers or {}, method=method, data=data)
     with urllib.request.urlopen(req, timeout=5) as resp:
         return resp.status, dict(resp.headers), resp.read()
 
@@ -128,3 +141,82 @@ def test_upstream_down_returns_502(site):
     with pytest.raises(urllib.error.HTTPError) as exc:
         get(site + "/map/up/world/world/0")
     assert exc.value.code == 502
+
+
+def test_extensionless_page_is_served(site):
+    status, headers, body = get(site + "/map")
+    assert status == 200
+    assert b"<title>Live Map" in body
+    assert headers.get("content-type", "").startswith("text/html")
+
+
+def test_extensionless_subpage_is_served(site):
+    status, _, body = get(site + "/community/bedrock")
+    assert status == 200
+    assert b"<title>Bedrock" in body
+
+
+def test_account_page_is_served_extensionless(site):
+    status, _, body = get(site + "/account")
+    assert status == 200
+    assert b"login-form" in body
+    assert b"register-form" in body
+
+
+def test_dotted_path_redirects_to_extensionless(site):
+    import urllib.error
+
+    class NoRedirect(urllib.request.HTTPRedirectHandler):
+        def redirect_request(self, *args, **kwargs):
+            return None
+
+    opener = urllib.request.build_opener(NoRedirect)
+    try:
+        opener.open(site + "/map.html", timeout=5)
+        raise AssertionError("expected a redirect")
+    except urllib.error.HTTPError as exc:
+        assert exc.code == 301
+        assert exc.headers.get("location") == "/map"
+
+
+def test_head_works_for_pages_and_proxy(site):
+    # Uptime robots / link checkers HEAD the page URLs; the proxy must not
+    # choke on a bodyless reply either.
+    status, headers, body = get(site + "/map", method="HEAD")
+    assert status == 200
+    assert body == b""
+    assert int(headers.get("content-length")) > 0
+    status, _, body = get(site + "/map/up/world/world/0", method="HEAD")
+    assert status == 200
+    assert body == b""
+
+
+def test_unknown_page_falls_through_to_404(site):
+    import urllib.error
+
+    with pytest.raises(urllib.error.HTTPError) as exc:
+        get(site + "/no-such-page")
+    assert exc.value.code == 404
+
+
+def test_post_forwards_body_to_api(site):
+    # The account page signs in/registers via POST /api/auth/*: the proxy
+    # must carry the JSON body through to the API unchanged.
+    status, _, body = get(
+        site + "/api/auth/login",
+        method="POST",
+        data=b'{"username":"u","password":"p"}',
+        headers={"Content-Type": "application/json"},
+    )
+    assert status == 200
+    assert json.loads(body) == {"echo": '{"username":"u","password":"p"}'}
+    assert UpstreamHandler.seen_post["path"] == "/api/auth/login"
+    assert UpstreamHandler.seen_post["content_type"] == "application/json"
+
+
+def test_post_outside_api_is_rejected(site):
+    import urllib.error
+
+    with pytest.raises(urllib.error.HTTPError) as exc:
+        get(site + "/account", method="POST", data=b"x=1")
+    assert exc.value.code == 405

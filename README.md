@@ -7,12 +7,26 @@ never hits CORS.
 
 ## Pages
 
+Canonical page addresses are EXTENSIONLESS (`/`, `/map`, `/account`,
+`/community/bedrock`); `serve.py` maps them onto the `.html` files and 301s
+any legacy dotted URL onto the pretty form. The table lists files, not URLs.
+
 | Page | File | What it does |
 |:---|:---|:---|
 | Home | `index.html` | Sectioned page; the intro section carries the hero, the launcher + Discord CTAs, and the players-online chip (live from the map feed). More sections append below over time. |
+| Account | `account.html` | Sign in / create an Ashen account (`/api/auth/login` + `/api/auth/register` through the same-origin proxy) and a signed-in profile view. The SAME account works in the launcher and the dashboard - tokens persist under the shared localStorage keys. |
 | Community: Discord | `community/discord.html` | Discord landing page (what the community offers) with a continue-to-Discord CTA; invite url comes from `site-config.js` with a static fallback |
 | Community: Bedrock | `community/bedrock.html` | Explains AshenCraft is not on Bedrock Edition and points Java-bundled owners at the launcher |
 | Live Map | `map.html` | Full-viewport iframe of the AshenMap web UI with a fullscreen toggle |
+
+## Languages (EN / PT)
+
+`i18n.js` holds the EN + PT dictionaries; every page carries `data-i18n`
+attributes (the HTML text is the English source of truth). The nav's top-right
+block hosts the login info and, side by side with it, the EN/PT switcher
+(persisted in localStorage under `ashen_site_lang`, first visit follows the
+browser language). `site.js` re-renders the nav on language change and rewrites
+placeholders and document titles.
 
 ## Local development
 
@@ -32,8 +46,9 @@ by `start.sh` from the stack env.
 
 | File | Role |
 |:---|:---|
-| `serve.py` | Static server + same-origin proxy (stdlib only) |
-| `site.js` | Nav injection (single source, incl. the Community dropdown) + live widgets with static fallbacks; nav hrefs get a `../` base prefix on subdirectory pages |
+| `serve.py` | Static server with extensionless page URLs + same-origin proxy (stdlib only); GET/HEAD pages + proxy, POST forwards to the API (auth) |
+| `i18n.js` | EN/PT dictionaries + translator (`data-i18n` scan, localStorage persistence, browser-language default) |
+| `site.js` | Nav injection (single source, incl. the Community dropdown, login info + EN/PT switcher top-right) + AshenSiteAuth helpers + live widgets with static fallbacks; nav hrefs get a `../` base prefix on subdirectory pages |
 | `theme.css` | Canonical AshenCraft night-fantasy palette (violet-charcoal ground, gilt gold accents) |
 | `start.sh` | Container entrypoint - regenerates `site-config.js`, then execs `serve.py` |
 | `Dockerfile` | Static-file image (`python:3-slim`) |
@@ -45,9 +60,10 @@ by `start.sh` from the stack env.
 
 | Route | Upstream | Prefix |
 |:---|:---|:---|
-| `/api/<path>` | `API_URL` (default `https://ashenapi.overdev.net`) | kept (`/api/launcher/version` -> `/api/launcher/version`) |
+| `/api/<path>` | `API_URL` (default `https://ashenapi.overdev.net`) | kept (`/api/launcher/version` -> `/api/launcher/version`); GET/HEAD and POST |
 | `/map/<path>` | `MAP_URL` (default `https://eu.ashencraft.overdev.net`) | stripped (`/map/up/world/world/0` -> `/up/world/world/0`) |
 | `/site-config.js` | local file | served with `Cache-Control: no-store` |
+| `/<page>` | local `<page>.html` | extensionless pages; `/<page>.html` 301s to the pretty form |
 
 Every proxied response is `no-store`; the pages' static assets carry `?v=`
 tokens for CDN cache busting.

@@ -26,4 +26,21 @@ assert.ok(html.includes('<title>AshenCraft - Minecraft MMORPG</title>'), 'title 
 assert.ok(!html.includes('A handcrafted fantasy MMORPG'), 'old handcrafted tagline is gone');
 assert.ok(html.includes('A fantasy MMORPG built on Minecraft'), 'new tagline is in');
 assert.ok(!html.includes('class="community"') || html.includes('community-dropdown'), 'nav dropdown markup is injected by site.js');
+
+// Account page (2026-09-10): sign in + register, i18n-wired, extensionless refs.
+const account = fs.readFileSync(__dirname + '/../account.html', 'utf8');
+assert.ok(account.includes('id="login-form"'), 'account page has the sign-in form');
+assert.ok(account.includes('id="register-form"'), 'account page has the register form');
+assert.ok(account.includes('AshenSiteAuth'), 'account page uses the shared auth helper');
+assert.ok(account.includes('data-i18n='), 'account page copy is translatable');
+assert.ok(account.includes('i18n.js?v='), 'account page loads the i18n module');
+assert.ok(!/[a-z-]+\.html/.test(account), 'account page carries no .html references');
+
+// Every page loads the i18n module and keeps hrefs extensionless.
+for (const page of ['index.html', 'map.html', 'community/discord.html', 'community/bedrock.html']) {
+  const src = fs.readFileSync(__dirname + '/../' + page, 'utf8');
+  assert.ok(src.includes('i18n.js?v='), page + ' loads i18n.js');
+  assert.ok(!/href="[a-z-]+\.html"/.test(src), page + ' has no dotted nav hrefs');
+}
+
 console.log('page structure OK');

@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Sign in - AshenCraft</title>
+    <meta name="description" content="Sign in with your Ashen account, or create one. The same account signs into the AshenCraft launcher." />
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="theme.css?v=site-5" />
+    <script src="site-config.js?v=config-1"></script>
+    <script src="i18n.js?v=i18n-1"></script>
+    <script src="site.js?v=site-5"></script>
+</head>
+<body data-i18n-page-title="account.title_signin">
+    <nav id="site-nav"></nav>
+    <main class="animate-fade-in">
+        <section class="page-section account-section">
+            <h1 id="account-title" data-i18n="account.signin_title">Sign in</h1>
+
+            <!-- Signed-in profile -->
+            <div id="account-profile" class="account-card" hidden>
+                <p class="account-hello">
+                    <span data-i18n="account.signed_in_as">Signed in as</span>
+                    <strong id="account-username"></strong>
+                </p>
+                <p id="account-created" class="account-muted"></p>
+                <div class="account-actions">
+                    <button type="button" id="account-signout" class="btn btn-secondary" data-i18n="account.signout">Sign out</button>
+                </div>
+                <p class="account-note" data-i18n="account.need_help">Your Ashen account works in the launcher too: sign in there with the same username and password.</p>
+            </div>
+
+            <!-- Sign in / create account -->
+            <div id="account-forms" class="account-card" hidden>
+                <div id="error-message" class="account-error" hidden></div>
+                <form id="login-form" autocomplete="on">
+                    <div class="field">
+                        <label for="username" data-i18n="account.username">Username</label>
+                        <input type="text" id="username" name="username" autocomplete="username" required
+                               data-i18n-placeholder="account.username" placeholder="Username" />
+                    </div>
+                    <div class="field">
+                        <label for="password" data-i18n="account.password">Password</label>
+                        <input type="password" id="password" name="password" autocomplete="current-password" required
+                               data-i18n-placeholder="account.password" placeholder="Password" />
+                    </div>
+                    <button type="submit" id="submit-btn" class="btn btn-primary" data-i18n="account.signin_cta">Sign in</button>
+                </form>
+                <form id="register-form" autocomplete="on" hidden>
+                    <div class="field">
+                        <label for="reg-username" data-i18n="account.username">Username</label>
+                        <input type="text" id="reg-username" name="username" autocomplete="username" required minlength="3" maxlength="32" pattern="[A-Za-z0-9_]+"
+                               data-i18n-placeholder="account.username" placeholder="Username" />
+                        <p class="field-hint" data-i18n="account.username_hint">3-32 characters, letters, numbers and underscore.</p>
+                    </div>
+                    <div class="field">
+                        <label for="reg-password" data-i18n="account.password">Password</label>
+                        <input type="password" id="reg-password" name="password" autocomplete="new-password" required minlength="8"
+                               data-i18n-placeholder="account.password" placeholder="Password" />
+                        <p class="field-hint" data-i18n="account.password_hint">At least 8 characters.</p>
+                    </div>
+                    <div class="field">
+                        <label for="reg-password2" data-i18n="account.password_confirm">Confirm password</label>
+                        <input type="password" id="reg-password2" name="password_confirm" autocomplete="new-password" required minlength="8"
+                               data-i18n-placeholder="account.password_confirm" placeholder="Confirm password" />
+                    </div>
+                    <button type="submit" id="register-btn" class="btn btn-primary" data-i18n="account.register_cta">Create account</button>
+                </form>
+                <p class="account-switch">
+                    <button type="button" id="mode-toggle" class="linklike"></button>
+                </p>
+                <p class="account-note" data-i18n="account.need_help">Your Ashen account works in the launcher too: sign in there with the same username and password.</p>
+            </div>
+        </section>
+    </main>
+    <footer data-i18n="footer">AshenCraft is a fan-made Minecraft experience. Not affiliated with Mojang.</footer>
+    <script>
+        (function () {
+            'use strict';
+            var auth = window.AshenSiteAuth;
+            var i18n = window.AshenI18n;
+
+            var profile = document.getElementById('account-profile');
+            var forms = document.getElementById('account-forms');
+            var loginForm = document.getElementById('login-form');
+            var registerForm = document.getElementById('register-form');
+            var modeToggle = document.getElementById('mode-toggle');
+            var errorEl = document.getElementById('error-message');
+            var title = document.getElementById('account-title');
+            var registerMode = false;
+
+            function refreshTitles() {
+                document.body.setAttribute('data-i18n-page-title', registerMode ? 'account.title_register' : 'account.title_signin');
+                title.setAttribute('data-i18n', registerMode ? 'account.register_title' : 'account.signin_title');
+                modeToggle.setAttribute('data-i18n', registerMode ? 'account.switch_to_signin' : 'account.switch_to_register');
+                i18n.apply(i18n.current());
+            }
+
+            function setMode(register) {
+                registerMode = !!register;
+                loginForm.hidden = registerMode;
+                registerForm.hidden = !registerMode;
+                refreshTitles();
+            }
+
+            function showError(message) {
+                errorEl.textContent = message;
+                errorEl.hidden = false;
+            }
+
+            function hideError() { errorEl.hidden = true; }
+
+            function setBusy(button, busy) {
+                button.disabled = busy;
+                if (busy) {
+                    button.dataset.label = button.textContent;
+                    button.textContent = i18n.t('account.working');
+                } else if (button.dataset.label) {
+                    button.textContent = button.dataset.label;
+                    delete button.dataset.label;
+                }
+            }
+
+            function showProfile() {
+                document.getElementById('account-username').textContent = auth.username() || '';
+                var created = '';
+                var raw = localStorage.getItem('ashen_site_created_at');
+                if (raw) {
+                    var d = new Date(raw);
+                    if (!isNaN(d.getTime())) {
+                        created = i18n.t('account.member_since', { date: d.toLocaleDateString(i18n.current() === 'pt' ? 'pt-PT' : 'en-GB') });
+                    }
+                }
+                document.getElementById('account-created').textContent = created;
+                profile.hidden = false;
+                forms.hidden = true;
+            }
+
+            function showForms() {
+                profile.hidden = true;
+                forms.hidden = false;
+            }
+
+            function friendlyError(err) {
+                var status = err && err.status;
+                if (status === 503) return i18n.t('account.err_503');
+                if (status === 401) return i18n.t('account.err_401');
+                if (status === 409) return i18n.t('account.err_409');
+                if (status === 429) return i18n.t('account.err_429');
+                if (status === 400) return i18n.t('account.err_400');
+                if (status) return String((err && err.detail) || ('HTTP ' + status));
+                return i18n.t('account.err_connection');
+            }
+
+            loginForm.addEventListener('submit', async function (e) {
+                e.preventDefault();
+                hideError();
+                var username = document.getElementById('username').value.trim();
+                var password = document.getElementById('password').value;
+                if (!username || !password) { showError(i18n.t('account.err_required')); return; }
+                var btn = document.getElementById('submit-btn');
+                setBusy(btn, true);
+                try {
+                    var data = await auth.login(username, password);
+                    if (data && data.account && data.account.created_at) {
+                        try { localStorage.setItem('ashen_site_created_at', data.account.created_at); } catch (err) {}
+                    }
+                    location.reload();
+                } catch (err) {
+                    setBusy(btn, false);
+                    showError(friendlyError(err));
+                }
+            });
+
+            registerForm.addEventListener('submit', async function (e) {
+                e.preventDefault();
+                hideError();
+                var username = document.getElementById('reg-username').value.trim();
+                var password = document.getElementById('reg-password').value;
+                var confirm = document.getElementById('reg-password2').value;
+                if (!username || !password) { showError(i18n.t('account.err_required')); return; }
+                if (password !== confirm) { showError(i18n.t('account.err_mismatch')); return; }
+                var btn = document.getElementById('register-btn');
+                setBusy(btn, true);
+                try {
+                    await auth.register(username, password);
+                    // Registered == signed in: mint the session right away so the
+                    // account is usable in the launcher without a second form.
+                    await auth.login(username, password);
+                    location.reload();
+                } catch (err) {
+                    setBusy(btn, false);
+                    showError(friendlyError(err));
+                }
+            });
+
+            modeToggle.addEventListener('click', function () { setMode(!registerMode); });
+            document.getElementById('account-signout').addEventListener('click', function () {
+                auth.logout().finally(function () { showForms(); });
+            });
+
+            document.addEventListener('ashen:lang', function () {
+                // Re-format the member-since line with the active locale.
+                if (!profile.hidden) showProfile();
+            });
+
+            setMode(false);
+            if (auth.isAuthenticated()) showProfile(); else showForms();
+        })();
+    </script>
+</body>
+</html>

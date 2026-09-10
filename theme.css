@@ -75,6 +75,35 @@ h1, h2, h3, .btn, .brand { font-family: var(--script); }
 }
 .nav-dropdown-content a:hover { background: rgba(200, 164, 90, 0.16); color: var(--cream); }
 
+/* Top-right block: login info (Sign in link or Signed in as <user>) + the
+   EN/PT switcher, always pushed to the far edge of the nav. */
+.nav-spacer { flex: 1; }
+#site-nav .nav-account {
+  display: inline-flex; align-items: center; gap: 10px;
+  color: var(--parchment); font-size: 13px;
+}
+#site-nav .nav-account-label strong { color: var(--gold-text); font-weight: 600; }
+#site-nav .nav-auth-link {
+  color: var(--gold-text); text-decoration: none; font-size: 14px; font-weight: 600;
+  padding: 8px 14px; border-radius: 8px; border: 1px solid var(--hairline);
+  background: var(--panel);
+}
+#site-nav .nav-auth-link:hover { background: rgba(200, 164, 90, 0.16); color: var(--cream); }
+.nav-auth-btn {
+  background: none; border: 1px solid var(--hairline); cursor: pointer;
+  color: var(--parchment); font-family: var(--body); font-size: 13px;
+  padding: 6px 12px; border-radius: 8px;
+}
+.nav-auth-btn:hover { background: rgba(200, 164, 90, 0.16); color: var(--cream); }
+.nav-lang { display: inline-flex; align-items: center; gap: 2px; margin-left: 10px; }
+.nav-lang-btn {
+  background: none; border: 0; cursor: pointer; padding: 6px 8px; border-radius: 7px;
+  color: var(--parchment); font-family: var(--body); font-size: 13px; font-weight: 600;
+  letter-spacing: 0.5px;
+}
+.nav-lang-btn:hover { background: rgba(200, 164, 90, 0.16); color: var(--cream); }
+.nav-lang-btn.lang-active { background: rgba(200, 164, 90, 0.24); color: var(--gold-text); }
+
 /* Community subpages share one centered content column */
 .page-section { max-width: 720px; margin: 0 auto; padding: 72px 24px 96px; }
 .page-section h1 { font-size: clamp(30px, 6vw, 42px); margin: 0 0 18px; }
@@ -102,15 +131,18 @@ section[id] { scroll-margin-top: 70px; }
 }
 
 .btn {
-  display: inline-flex; align-items: center; gap: 8px;
+  display: inline-flex; align-items: center; gap: 8px; justify-content: center;
   padding: 14px 28px; border-radius: 10px; cursor: pointer;
   text-decoration: none; font-weight: 700; font-size: 16px; letter-spacing: 0.5px;
   border: 1px solid transparent; transition: filter 0.15s;
+  font-family: var(--body);
 }
 .btn-primary { background: var(--gold); color: #241A08; border-color: var(--gold); }
 .btn-primary:hover { background: var(--gold-hover); animation: torch-flicker 1.8s ease-in-out infinite; }
+.btn-primary:disabled { opacity: 0.6; cursor: wait; animation: none; }
 .btn-secondary { background: transparent; color: var(--gold); border-color: var(--gold); }
 .btn-secondary:hover { background: rgba(200, 164, 90, 0.16); }
+.btn-secondary:disabled { opacity: 0.6; cursor: wait; }
 
 .chip {
   display: inline-flex; align-items: center; gap: 8px;
@@ -119,6 +151,39 @@ section[id] { scroll-margin-top: 70px; }
   font-size: 13px; color: var(--parchment);
 }
 .chip .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--brass); animation: pulse-dot 2s ease-in-out infinite; }
+
+/* Account page (sign in / create account / signed-in profile) */
+.account-section { max-width: 480px; }
+.account-card {
+  background: var(--panel); border: 1px solid var(--hairline); border-radius: var(--radius);
+  padding: 28px 28px 24px; margin-top: 8px;
+  display: flex; flex-direction: column; gap: 16px;
+}
+.account-card[hidden] { display: none; }
+.account-card .field { display: flex; flex-direction: column; gap: 6px; }
+.account-card label { font-size: 13px; font-weight: 600; color: var(--parchment); }
+.account-card input {
+  background: var(--panel-strong); color: var(--cream);
+  border: 1px solid var(--hairline); border-radius: 9px;
+  padding: 11px 13px; font-size: 15px; font-family: var(--body);
+}
+.account-card input:focus { outline: none; border-color: var(--gold); box-shadow: 0 0 0 3px rgba(200, 164, 90, 0.18); }
+.field-hint { margin: 0; font-size: 12px; color: rgba(242, 232, 213, 0.55); }
+.account-error {
+  background: rgba(220, 38, 38, 0.14); border: 1px solid rgba(220, 38, 38, 0.45);
+  color: #F1A9A9; padding: 10px 13px; border-radius: 9px; font-size: 13.5px;
+}
+.account-switch { margin: 0; text-align: center; }
+.linklike {
+  background: none; border: 0; cursor: pointer; padding: 4px;
+  color: var(--gold-text); font-size: 14px; font-family: var(--body); font-weight: 600;
+}
+.linklike:hover { text-decoration: underline; }
+.account-hello { margin: 0; font-size: 15px; }
+.account-hello strong { color: var(--gold-text); }
+.account-muted { margin: 0; font-size: 13px; color: rgba(242, 232, 213, 0.6); }
+.account-actions { display: flex; gap: 10px; }
+.account-note { margin: 0; font-size: 12.5px; color: rgba(242, 232, 213, 0.55); line-height: 1.55; }
 
 footer {
   text-align: center; padding: 32px; color: rgba(242, 232, 213, 0.55);

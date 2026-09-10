@@ -2,23 +2,121 @@
   'use strict';
   var cfg = window.ASHEN_SITE || {};
 
-  // Pages under /community/ live one directory deep; every nav href gets a
-  // base prefix so the same array works from index.html and the subpages.
+  // ── Auth (AshenAccount) ────────────────────────────────────────────────
+  // Same accounts as the launcher and the dashboard: POST /api/auth/login and
+  // /api/auth/register through this site's same-origin proxy. Tokens persist
+  // in localStorage under the dashboard's key names so the whole ecosystem
+  // shares one account.
+  var TOKEN_KEY = 'ashen_auth_token';
+  var REFRESH_KEY = 'ashen_refresh_token';
+  var USER_KEY = 'ashen_site_username';
+
+  function readJson(name) {
+    try { return localStorage.getItem(name); } catch (e) { return null; }
+  }
+  function writeJson(name, value) {
+    try {
+      if (value === null) localStorage.removeItem(name);
+      else localStorage.setItem(name, value);
+    } catch (e) { /* private mode */ }
+  }
+
+  function siteApiBase() { return (cfg && cfg.apiUrl) || ''; }
+  function siteToken() { return readJson(TOKEN_KEY); }
+  function siteIsAuthenticated() { return !!siteToken(); }
+
+  async function siteApi(path, options) {
+    options = options || {};
+    var headers = Object.assign({ Accept: 'application/json' }, options.headers || {});
+    var token = siteToken();
+    if (token) headers.Authorization = 'Bearer ' + token;
+    var body = options.body;
+    if (body && typeof body === 'object' && !(body instanceof FormData)) {
+      headers['Content-Type'] = 'application/json';
+      body = JSON.stringify(body);
+    }
+    var base = siteApiBase();
+    // Local dev (python serve.py) rides the same-origin proxy; when the page
+    // is opened as a plain file (site-config fallback points at prod) go
+    // cross-origin directly.
+    var url = base && !base.startsWith('/') && location.protocol === 'file:' ? base + path : path;
+    var res = await fetch(url, { method: options.method || 'GET', headers: headers, body: body });
+    var data = null;
+    var text = await res.text();
+    if (text) { try { data = JSON.parse(text); } catch (e) { data = null; } }
+    if (!res.ok) {
+      var err = new Error((data && data.detail) ? String(data.detail) : ('HTTP ' + res.status));
+      err.status = res.status;
+      err.detail = data && data.detail;
+      throw err;
+    }
+    return data;
+  }
+
+  async function siteLogin(username, password) {
+    var data = await siteApi('/api/auth/login', { method: 'POST', body: { username: username, password: password } });
+    if (data && data.access_token) {
+      writeJson(TOKEN_KEY, data.access_token);
+      if (data.refresh_token) writeJson(REFRESH_KEY, data.refresh_token);
+      writeJson(USER_KEY, (data.account && data.account.username) || username);
+    }
+    return data;
+  }
+
+  async function siteRegister(username, password) {
+    return siteApi('/api/auth/register', { method: 'POST', body: { username: username, password: password } });
+  }
+
+  async function siteLogout() {
+    var refresh = readJson(REFRESH_KEY);
+    writeJson(TOKEN_KEY, null);
+    writeJson(USER_KEY, null);
+    if (refresh) {
+      writeJson(REFRESH_KEY, null);
+      try {
+        await siteApi('/api/auth/logout', { method: 'POST', body: { refresh_token: refresh } });
+      } catch (e) { /* token already dead - the local session is gone either way */ }
+    }
+  }
+
+  window.AshenSiteAuth = {
+    isAuthenticated: siteIsAuthenticated,
+    token: siteToken,
+    username: function () { return readJson(USER_KEY); },
+    login: siteLogin,
+    register: siteRegister,
+    logout: siteLogout,
+    TOKEN_KEY: TOKEN_KEY,
+  };
+
+  // ── Pages and nav ──────────────────────────────────────────────────────
+  // Extensionless URLs are canonical (/login, /community/bedrock); the
+  // server 301s the legacy .html paths onto them. Nav hrefs therefore never
+  // carry .html, and the base prefix keeps them resolving from /community/*.
   var depth = (location.pathname.replace(/\/+$/, '').split('/').length - 1);
   var base = depth > 1 ? '../' : '';
   function href(p) { return base + p; }
 
   var NAV = [
-    { href: 'index.html', label: 'Home' },
+    { href: '', labelKey: 'nav.home', key: 'home' },
     {
-      label: 'Community',
+      labelKey: 'nav.community',
       items: [
-        { href: 'community/discord.html', label: 'Discord' },
-        { href: 'community/bedrock.html', label: 'Bedrock' },
+        { href: 'community/discord', labelKey: 'nav.discord', key: 'discord' },
+        { href: 'community/bedrock', labelKey: 'nav.bedrock', key: 'bedrock' },
       ],
     },
-    { href: 'map.html', label: 'Map' },
+    { href: 'map', labelKey: 'nav.map', key: 'map' },
   ];
+
+  function currentKey() {
+    var path = location.pathname.replace(/\/+$/, '');
+    if (path.endsWith('/account')) return 'account';
+    if (path.endsWith('/map')) return 'map';
+    if (path.endsWith('/community/discord')) return 'discord';
+    if (path.endsWith('/community/bedrock')) return 'bedrock';
+    return 'home';
+  }
 
   function setText(id, text) {
     var el = document.getElementById(id);
@@ -33,31 +131,93 @@
     el.setAttribute('href', /^(https?:|\/\/)/.test(target) ? target : href(target));
   }
 
-  function formatOnline(count) {
-    if (count === null || count === undefined) return 'Players online: unknown';
-    if (count === 1) return '1 player online';
-    return count + ' players online';
+  function formatOnline(count, t) {
+    t = t || function (k, p) { return p ? k.replace('{count}', p.count) : k; };
+    if (count === null || count === undefined) return t('home.players_unknown');
+    if (count === 1) return t('home.players_one');
+    return t('home.players_many', { count: count });
   }
   window.AshenSite = { formatOnline: formatOnline };
 
-  function pagePath(item) { return item.items ? null : item.href; }
+  function escapeHtml(value) {
+    return String(value).replace(/[&<>"']/g, function (c) {
+      return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
+    });
+  }
 
-  function renderNav(current) {
+  function authNavHtml(t) {
+    if (siteIsAuthenticated()) {
+      return '<span class="nav-account" id="nav-account">' +
+        '<span class="nav-account-label">' + escapeHtml(t('nav.account_as')) + ' <strong>' +
+        escapeHtml(readJson(USER_KEY) || '') + '</strong></span>' +
+        '<button type="button" class="nav-auth-btn" id="nav-logout">' + escapeHtml(t('nav.logout')) + '</button>' +
+        '</span>';
+    }
+    return '<a class="nav-auth-link" id="nav-login" href="' + href('account') + '">' + escapeHtml(t('nav.login')) + '</a>';
+  }
+
+  function langSwitcherHtml(t) {
+    var lang = window.AshenI18n.current();
+    function btn(code, label) {
+      var active = lang === code ? ' lang-active' : '';
+      return '<button type="button" class="nav-lang-btn' + active + '" data-lang="' + code + '">' + label + '</button>';
+    }
+    return '<span class="nav-lang" id="nav-lang">' + btn('en', 'EN') + btn('pt', 'PT') + '</span>';
+  }
+
+  function bindNavHandlers(t) {
+    var logoutBtn = document.getElementById('nav-logout');
+    if (logoutBtn) {
+      logoutBtn.addEventListener('click', function () {
+        siteLogout().finally(function () {
+          // Re-render the nav so the login link comes back, then leave the
+          // account page itself (it shows a signed-in profile when logged in).
+          if (currentKey() === 'account') location.href = href('account');
+          else renderNav();
+        });
+      });
+    }
+    var langHost = document.getElementById('nav-lang');
+    if (langHost) {
+      langHost.addEventListener('click', function (e) {
+        var btn = e.target && e.target.closest ? e.target.closest('[data-lang]') : null;
+        if (!btn) return;
+        window.AshenI18n.apply(btn.getAttribute('data-lang'));
+      });
+    }
+  }
+
+  function renderNav() {
     var host = document.getElementById('site-nav');
     if (!host) return;
+    var t = window.AshenI18n.t;
+    var current = currentKey();
+
+    function link(item) {
+      return '<a href="' + href(item.href) + '"' + (item.key === current ? ' class="active"' : '') +
+        ' data-i18n="' + item.labelKey + '">' + escapeHtml(t(item.labelKey)) + '</a>';
+    }
     var links = NAV.map(function (item) {
       if (item.items) {
         var sub = item.items.map(function (sub_item) {
-          return '<a href="' + href(sub_item.href) + '">' + sub_item.label + '</a>';
+          return '<a href="' + href(sub_item.href) + '"' + (sub_item.key === current ? ' class="active"' : '') +
+            ' data-i18n="' + sub_item.labelKey + '">' + escapeHtml(t(sub_item.labelKey)) + '</a>';
         }).join('');
         return '<div class="nav-dropdown" id="community-dropdown">' +
-          '<button type="button" class="nav-dropbtn">Community</button>' +
+          '<button type="button" class="nav-dropbtn" data-i18n="' + item.labelKey + '">' + escapeHtml(t(item.labelKey)) + '</button>' +
           '<div class="nav-dropdown-content">' + sub + '</div></div>';
       }
-      var active = item.href === current ? ' class="active"' : '';
-      return '<a href="' + href(item.href) + '"' + active + '>' + item.label + '</a>';
+      return link(item);
     }).join('');
-    host.innerHTML = '<a href="' + href('index.html') + '" class="brand">AshenCraft</a>' + links;
+
+    host.innerHTML =
+      '<a href="' + href('') + '" class="brand">AshenCraft</a>' +
+      links +
+      '<span class="nav-spacer"></span>' +
+      authNavHtml(t) +
+      langSwitcherHtml(t);
+
+    bindNavHandlers(t);
   }
   window.AshenSite.renderNav = renderNav;
 
@@ -65,18 +225,29 @@
   // render (and the widget fetches, which also touch the DOM) must wait for
   // the document to be parsed. Without this the nav silently never renders.
   function init() {
-    var file = location.pathname.split('/').pop() || 'index.html';
-    var dir = location.pathname.replace(/\/+$/, '').split('/').slice(-2, -1)[0] || '';
-    var page = dir === 'community' ? 'community/' + file : file;
-    renderNav(page);
+    window.AshenI18n.apply(window.AshenI18n.initial());
+    renderNav();
+
+    // Re-render the nav after every language switch (the auth block and the
+    // switcher labels are part of the nav markup).
+    document.addEventListener('ashen:lang', function () {
+      renderNav();
+      var feedCount = window.AshenSite._lastOnline;
+      setText('players-online', formatOnline(feedCount === undefined ? null : feedCount, window.AshenI18n.t));
+    });
 
     // Live widgets - every fetch has a static fallback, never blank the page.
     fetch('/map/up/world/world/0', { headers: { Accept: 'application/json' } })
       .then(function (r) { return r.ok ? r.json() : null; })
       .then(function (feed) {
-        setText('players-online', formatOnline(feed && feed.currentcount));
+        var count = feed && feed.currentcount !== undefined ? feed.currentcount : null;
+        window.AshenSite._lastOnline = count;
+        setText('players-online', formatOnline(count, window.AshenI18n.t));
       })
-      .catch(function () { setText('players-online', formatOnline(null)); });
+      .catch(function () {
+        window.AshenSite._lastOnline = null;
+        setText('players-online', formatOnline(null, window.AshenI18n.t));
+      });
 
     fetch('/api/launcher/version', { headers: { Accept: 'application/json' } })
       .then(function (r) { return r.ok ? r.json() : null; })

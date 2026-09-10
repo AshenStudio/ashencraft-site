@@ -7,9 +7,10 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="theme.css?v=site-4" />
+    <link rel="stylesheet" href="theme.css?v=site-5" />
     <script src="site-config.js?v=config-1"></script>
-    <script src="site.js?v=site-4"></script>
+    <script src="i18n.js?v=i18n-1"></script>
+    <script src="site.js?v=site-5"></script>
     <style>
         html, body { height: 100%; }
         /* Flex column page: the nav keeps its natural height and the map fills
@@ -37,10 +38,10 @@
     <nav id="site-nav"></nav>
     <div class="map-shell">
         <div class="map-tools">
-            <span class="chip"><span class="dot"></span>Live world map</span>
+            <span class="chip"><span class="dot"></span><span data-i18n="map.live">Live world map</span></span>
             <span>
-                <button id="map-fullscreen" class="btn btn-secondary" type="button">Fullscreen</button>
-                <a id="map-open" class="btn btn-secondary" href="https://eu.ashencraft.overdev.net" target="_blank" rel="noopener">Open in new tab</a>
+                <button id="map-fullscreen" class="btn btn-secondary" type="button" data-i18n="map.fullscreen">Fullscreen</button>
+                <a id="map-open" class="btn btn-secondary" href="https://eu.ashencraft.overdev.net" target="_blank" rel="noopener"><span data-i18n="map.open">Open in new tab</span></a>
             </span>
         </div>
         <iframe id="map-frame" title="AshenCraft live map" src="about:blank"></iframe>

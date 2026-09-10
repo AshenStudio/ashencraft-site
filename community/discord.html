@@ -8,20 +8,21 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="../theme.css?v=site-4" />
+    <link rel="stylesheet" href="../theme.css?v=site-5" />
     <script src="../site-config.js?v=config-1"></script>
-    <script src="../site.js?v=site-4"></script>
+    <script src="../i18n.js?v=i18n-1"></script>
+    <script src="../site.js?v=site-5"></script>
 </head>
 <body>
     <nav id="site-nav"></nav>
     <main class="animate-fade-in">
         <section class="page-section">
-            <h1>Community Discord</h1>
-            <p>The Discord server of AshenCraft: chat with other players, patch notes and changelogs the moment they ship, event announcements, world and build showcases, and a support channel where staff and players answer questions about the launcher, characters and gameplay.</p>
-            <p><a id="discord-invite" class="btn btn-primary" href="https://discord.gg/Y6nk7vnMzY">Continue to Discord</a></p>
+            <h1 data-i18n="discord.title">Community Discord</h1>
+            <p data-i18n="discord.body">The Discord server of AshenCraft: chat with other players, patch notes and changelogs the moment they ship, event announcements, world and build showcases, and a support channel where staff and players answer questions about the launcher, characters and gameplay.</p>
+            <p><a id="discord-invite" class="btn btn-primary" href="https://discord.gg/Y6nk7vnMzY"><span data-i18n="discord.cta">Continue to Discord</span></a></p>
         </section>
     </main>
-    <footer>AshenCraft is a fan-made Minecraft experience. Not affiliated with Mojang.</footer>
+    <footer data-i18n="footer">AshenCraft is a fan-made Minecraft experience. Not affiliated with Mojang.</footer>
     <script>
         // Discord invite from config (regenerated at boot; static fallback above).
         (function () {

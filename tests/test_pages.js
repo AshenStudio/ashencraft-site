@@ -20,4 +20,10 @@ for (const gone of [
 assert.ok(html.includes('id="play-now"'), 'launcher CTA stays');
 assert.ok(html.includes('id="discord-invite"'), 'discord CTA stays');
 assert.ok(html.includes('id="players-online"'), 'players-online chip stays');
+
+// Copy pins (2026-09-10): shorter tagline, updated title, Community dropdown.
+assert.ok(html.includes('<title>AshenCraft - Minecraft MMORPG</title>'), 'title is AshenCraft - Minecraft MMORPG');
+assert.ok(!html.includes('A handcrafted fantasy MMORPG'), 'old handcrafted tagline is gone');
+assert.ok(html.includes('A fantasy MMORPG built on Minecraft'), 'new tagline is in');
+assert.ok(!html.includes('class="community"') || html.includes('community-dropdown'), 'nav dropdown markup is injected by site.js');
 console.log('page structure OK');

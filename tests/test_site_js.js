@@ -60,6 +60,9 @@ function runScript(doc) {
   assert.ok(navHtml.includes('>AshenCraft</a>'), 'nav has the brand');
   assert.ok(navHtml.includes('>Home</a>'), 'nav has Home link');
   assert.ok(navHtml.includes('>Map</a>'), 'nav has Map link');
+  assert.ok(navHtml.includes('community-dropdown'), 'nav has the Community dropdown');
+  assert.ok(navHtml.includes('>Discord</a>'), 'dropdown has a Discord item');
+  assert.ok(navHtml.includes('>Bedrock</a>'), 'dropdown has a Bedrock item');
   assert.ok(navHtml.includes('class="active"'), 'current page (map.html) is marked active');
 }
 
@@ -78,6 +81,9 @@ function runScript(doc) {
   const navHtml = calls['site-nav'].innerHTML;
   assert.ok(navHtml.includes('>Home</a>'), 'nav has Home link');
   assert.ok(navHtml.includes('>Map</a>'), 'nav has Map link');
+  assert.ok(navHtml.includes('community-dropdown'), 'nav has the Community dropdown');
+  assert.ok(navHtml.includes('>Discord</a>'), 'dropdown has a Discord item');
+  assert.ok(navHtml.includes('>Bedrock</a>'), 'dropdown has a Bedrock item');
   assert.ok(navHtml.includes('class="active"'), 'current page is marked active');
 
   setTimeout(() => {

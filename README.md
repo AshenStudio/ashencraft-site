@@ -10,6 +10,8 @@ never hits CORS.
 | Page | File | What it does |
 |:---|:---|:---|
 | Home | `index.html` | Sectioned page; the intro section carries the hero, the launcher + Discord CTAs, and the players-online chip (live from the map feed). More sections append below over time. |
+| Community: Discord | `community/discord.html` | Discord landing page (what the community offers) with a continue-to-Discord CTA; invite url comes from `site-config.js` with a static fallback |
+| Community: Bedrock | `community/bedrock.html` | Explains AshenCraft is not on Bedrock Edition and points Java-bundled owners at the launcher |
 | Live Map | `map.html` | Full-viewport iframe of the AshenMap web UI with a fullscreen toggle |
 
 ## Local development
@@ -31,7 +33,7 @@ by `start.sh` from the stack env.
 | File | Role |
 |:---|:---|
 | `serve.py` | Static server + same-origin proxy (stdlib only) |
-| `site.js` | Nav injection (single source) + live widgets with static fallbacks |
+| `site.js` | Nav injection (single source, incl. the Community dropdown) + live widgets with static fallbacks; nav hrefs get a `../` base prefix on subdirectory pages |
 | `theme.css` | Canonical AshenCraft night-fantasy palette (violet-charcoal ground, gilt gold accents) |
 | `start.sh` | Container entrypoint - regenerates `site-config.js`, then execs `serve.py` |
 | `Dockerfile` | Static-file image (`python:3-slim`) |

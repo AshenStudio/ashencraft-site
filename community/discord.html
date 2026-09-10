@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Discord - AshenCraft</title>
+    <meta name="description" content="Join the AshenCraft Discord: patch notes, events, support and the community around the server." />
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="../theme.css?v=site-4" />
+    <script src="../site-config.js?v=config-1"></script>
+    <script src="../site.js?v=site-4"></script>
+</head>
+<body>
+    <nav id="site-nav"></nav>
+    <main class="animate-fade-in">
+        <section class="page-section">
+            <h1>Community Discord</h1>
+            <p>The Discord is the gathering hall of AshenCraft: patch notes and changelogs the moment they ship, event announcements, world and build showcases, and a support channel where staff and players answer questions about the launcher, characters and gameplay.</p>
+            <p>Link your Discord account in the launcher to keep notifications in sync with your characters, and jump straight into party finding, waystone caravans and boss callouts with the rest of the community.</p>
+            <p><a id="discord-invite" class="btn btn-primary" href="https://discord.gg/Y6nk7vnMzY">Continue to Discord</a></p>
+        </section>
+    </main>
+    <footer>AshenCraft is a fan-made Minecraft experience. Not affiliated with Mojang.</footer>
+    <script>
+        // Discord invite from config (regenerated at boot; static fallback above).
+        (function () {
+            var cfg = window.ASHEN_SITE || {};
+            if (cfg.discordInvite) document.getElementById('discord-invite').href = cfg.discordInvite;
+        })();
+    </script>
+</body>
+</html>

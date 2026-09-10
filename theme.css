@@ -52,6 +52,35 @@ h1, h2, h3, .btn, .brand { font-family: var(--script); }
 }
 #site-nav a:not(.brand):hover, #site-nav a.active { background: rgba(200, 164, 90, 0.16); color: var(--cream); }
 
+/* Community dropdown (button injected by site.js) */
+.nav-dropdown { position: relative; }
+.nav-dropbtn {
+  background: none; border: 0; cursor: pointer;
+  color: var(--parchment); font-family: var(--body); font-size: 14px; font-weight: 500;
+  padding: 8px 14px; border-radius: 8px;
+}
+.nav-dropbtn::after { content: " \25BE"; font-size: 11px; }
+.nav-dropdown:hover .nav-dropbtn,
+.nav-dropbtn:focus-visible { background: rgba(200, 164, 90, 0.16); color: var(--cream); outline: none; }
+.nav-dropdown-content {
+  display: none; position: absolute; top: 100%; left: 0; min-width: 160px;
+  background: var(--panel-strong); border: 1px solid var(--hairline); border-radius: 10px;
+  padding: 6px; box-shadow: 0 10px 26px rgba(0, 0, 0, 0.45); z-index: 60;
+}
+.nav-dropdown:hover .nav-dropdown-content,
+.nav-dropdown:focus-within .nav-dropdown-content { display: block; }
+.nav-dropdown-content a {
+  display: block; padding: 9px 12px; border-radius: 7px;
+  color: var(--parchment); text-decoration: none; font-size: 14px; font-weight: 500;
+}
+.nav-dropdown-content a:hover { background: rgba(200, 164, 90, 0.16); color: var(--cream); }
+
+/* Community subpages share one centered content column */
+.page-section { max-width: 720px; margin: 0 auto; padding: 72px 24px 96px; }
+.page-section h1 { font-size: clamp(30px, 6vw, 42px); margin: 0 0 18px; }
+.page-section p { color: rgba(242, 232, 213, 0.78); line-height: 1.7; font-size: 15px; }
+.page-section .btn { margin-top: 10px; }
+
 main { max-width: 1080px; margin: 0 auto; padding: 0 24px; }
 
 /* Full-viewport scroll sections; the intro is section one. Future
